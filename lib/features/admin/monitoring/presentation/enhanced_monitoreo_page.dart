@@ -6,6 +6,8 @@ import 'package:sotfbee/features/admin/monitoring/presentation/apiary_management
 import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.dart';
 import 'package:sotfbee/features/admin/monitoring/service/enhanced_voice_assistant_service.dart';
 import 'package:sotfbee/features/admin/monitoring/service/local_db_service.dart';
+import 'package:sotfbee/features/admin/history/models/monitoreo_models.dart' as history_models;
+import 'package:sotfbee/features/admin/history/presentation/detailis_inspeccion_page.dart';
 
 class EnhancedMonitoreoScreen extends StatefulWidget {
   const EnhancedMonitoreoScreen({Key? key}) : super(key: key);
@@ -132,6 +134,33 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
           isMayaActive = mayaAssistant.isAssistantActive;
           currentResponses = mayaAssistant.currentResponses;
         });
+      }
+    });
+
+    mayaAssistant.monitoringCompletedController.stream.listen((monitoreo) {
+      if (mounted) {
+        // Convertir el monitoreo de reports_models.Monitoreo a history_models.MonitoreoModel
+        final historyMonitoreo = history_models.MonitoreoModel(
+          id: monitoreo.monitoreoId,
+          idColmena: monitoreo.colmenaId,
+          idApiario: monitoreo.apiarioId,
+          fecha: monitoreo.fecha.toIso8601String(),
+          respuestas: monitoreo.respuestas.map((r) => history_models.RespuestaModel(
+            preguntaId: r.preguntaTexto, // Assuming preguntaTexto can be used as preguntaId for display
+            preguntaTexto: r.preguntaTexto,
+            respuesta: r.respuesta ?? '',
+            tipoRespuesta: r.tipoRespuesta,
+          )).toList(),
+          apiarioNombre: monitoreo.apiarioNombre,
+          numeroColmena: int.tryParse(monitoreo.hiveNumber ?? ''),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InspeccionDetalleScreenModified(monitoreo: historyMonitoreo),
+          ),
+        );
       }
     });
   }
