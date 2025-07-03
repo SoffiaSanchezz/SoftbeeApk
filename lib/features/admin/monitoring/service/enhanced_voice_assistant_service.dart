@@ -421,81 +421,29 @@ class EnhancedVoiceAssistantService {
   Future<void> _loadQuestions() async {
     try {
       if (selectedApiario != null) {
-        List<Pregunta> allQuestions = [];
-        // Intentar cargar preguntas del servidor
-        if (await EnhancedApiService.hasInternetConnection()) {
-          try {
-            allQuestions = await EnhancedApiService.obtenerPreguntasApiario(
-              selectedApiario!.id,
-            );
-          } catch (e) {
-            debugPrint("⚠️ Error al cargar preguntas del servidor: $e");
-          }
-        }
+        // Cargar solo las preguntas activas desde el servidor
+        preguntasActivas = await EnhancedApiService.obtenerPreguntasApiario(
+          selectedApiario!.id,
+          soloActivas: true, // Asegurarse de obtener solo las activas
+        );
 
-        // Si no hay preguntas del servidor, usar preguntas por defecto
-        if (allQuestions.isEmpty) {
-          allQuestions = await _getDefaultQuestions();
+        if (preguntasActivas.isEmpty) {
+          await speak(
+            "No hay preguntas de monitoreo activas para este apiario. Por favor, configura las preguntas en la pantalla de gestión.",
+          );
+          await stopAssistant();
+          return;
         }
-        
-        // Filtrar solo las preguntas seleccionadas
-        preguntasActivas = allQuestions.where((p) => p.seleccionada).toList();
       }
 
-      debugPrint("✅ Cargadas ${preguntasActivas.length} preguntas seleccionadas");
+      debugPrint("✅ Cargadas ${preguntasActivas.length} preguntas activas");
     } catch (e) {
       debugPrint("❌ Error al cargar preguntas: $e");
-      preguntasActivas = await _getDefaultQuestions();
+      await speak(
+        "Tuve un problema al cargar las preguntas. Por favor, revisa tu conexión e inténtalo de nuevo.",
+      );
+      await stopAssistant();
     }
-  }
-
-  Future<List<Pregunta>> _getDefaultQuestions() async {
-    return [
-      Pregunta(
-        id: 1,
-        texto: "¿Cómo está la actividad en las piqueras?",
-        seleccionada: true,
-        tipoRespuesta: "opciones",
-        opciones: [
-          Opcion(valor: "Baja"),
-          Opcion(valor: "Media"),
-          Opcion(valor: "Alta"),
-        ],
-        obligatoria: true,
-      ),
-      Pregunta(
-        id: 2,
-        texto: "¿Cómo evalúas la población de abejas?",
-        seleccionada: true,
-        tipoRespuesta: "opciones",
-        opciones: [
-          Opcion(valor: "Baja"),
-          Opcion(valor: "Media"),
-          Opcion(valor: "Alta"),
-        ],
-        obligatoria: true,
-      ),
-      Pregunta(
-        id: 3,
-        texto: "¿Cuántos cuadros de alimento observas?",
-        seleccionada: true,
-        tipoRespuesta: "numero",
-        min: 0,
-        max: 10,
-        obligatoria: true,
-      ),
-      Pregunta(
-        id: 4,
-        texto: "¿Cuál es el estado de la reina?",
-        seleccionada: true,
-        tipoRespuesta: "opciones",
-        opciones: [
-          Opcion(valor: "Presente"),
-          Opcion(valor: "Ausente"),
-          Opcion(valor: "Celdas reales"),
-        ],
-      ),
-    ];
   }
 
   Future<void> _startQuestionFlow() async {
