@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:sotfbee/features/admin/monitoring/models/enhanced_models.dart';
 import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.dart';
+import 'package:sotfbee/features/admin/reports/model/api_models.dart' as reports_models;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,6 +28,8 @@ class EnhancedVoiceAssistantService {
       StreamController<String>.broadcast();
   StreamController<bool> listeningController =
       StreamController<bool>.broadcast();
+  StreamController<reports_models.Monitoreo> monitoringCompletedController =
+      StreamController<reports_models.Monitoreo>.broadcast();
 
   // Estados del flujo de monitoreo
   String currentMessage = '';
@@ -602,6 +605,24 @@ class EnhancedVoiceAssistantService {
       if (monitoreoId > 0) {
         await dbService.saveRespuestas(monitoreoId, respuestas);
 
+        // Construir el objeto de reporte y emitirlo
+        final report = reports_models.Monitoreo(
+          monitoreoId: monitoreoId,
+          colmenaId: selectedColmena!,
+          apiarioId: selectedApiario!.id,
+          fecha: DateTime.now(),
+          respuestas: respuestas.map((r) {
+            return reports_models.RespuestaMonitoreo(
+              preguntaTexto: r.preguntaTexto,
+              respuesta: r.respuesta?.toString() ?? 'N/A',
+              tipoRespuesta: r.tipoRespuesta ?? 'texto',
+            );
+          }).toList(),
+          apiarioNombre: selectedApiario!.nombre,
+          hiveNumber: selectedColmena.toString(),
+        );
+        monitoringCompletedController.add(report);
+
         await speak(
           "¡Excelente! Los datos han sido guardados correctamente. El monitoreo de la colmena $selectedColmena está completo.",
         );
@@ -950,6 +971,7 @@ class EnhancedVoiceAssistantService {
     speechResultsController.close();
     statusController.close();
     listeningController.close();
+    monitoringCompletedController.close();
     stopAssistant();
   }
 

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sotfbee/features/admin/reports/model/api_models.dart';
 import 'package:sotfbee/features/admin/reports/presentation/report_detail_page.dart';
 import 'package:sotfbee/features/admin/reports/service/reports_service.dart';
+import 'package:sotfbee/features/admin/reports/widgets/dashboard_widgets.dart';
+import 'package:sotfbee/features/admin/reports/widgets/responsive_widgets.dart';
 
 class DashboardReportsPage extends StatefulWidget {
   @override
@@ -13,14 +16,16 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
   bool _isLoading = true;
   String? _error;
   List<Monitoreo> _reports = [];
+  List<Apiario> _apiarios = [];
+  SystemStats? _stats;
 
   @override
   void initState() {
     super.initState();
-    _loadReports();
+    _loadData();
   }
 
-  Future<void> _loadReports() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -28,8 +33,20 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
 
     try {
       final reports = await ReportsService.getMonitoringReports();
+      final apiarios = await ReportsService.getApiarios();
+      final stats = await ReportsService.getSystemStats();
+
+      // Asignar monitoreos a sus respectivos apiarios
+      for (var apiario in apiarios) {
+        apiario.monitoreos = reports
+            .where((report) => report.apiarioId == apiario.id)
+            .toList();
+      }
+
       setState(() {
         _reports = reports;
+        _apiarios = apiarios;
+        _stats = stats;
         _isLoading = false;
       });
     } catch (e) {
@@ -43,8 +60,10 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ApiarioTheme.backgroundColor,
       appBar: AppBar(
-        title: Text('Reportes de Monitoreo'),
+        title: Text('Reportes de Monitoreo', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        backgroundColor: ApiarioTheme.primaryColor,
       ),
       body: _buildBody(),
     );
@@ -56,48 +75,49 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error, color: Colors.red, size: 50),
-            SizedBox(height: 10),
-            Text('Error al cargar los reportes'),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _loadReports,
-              child: Text('Reintentar'),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorWidget();
     }
 
-    if (_reports.isEmpty) {
-      return Center(child: Text('No hay reportes disponibles.'));
-    }
-
-    return ListView.builder(
-      itemCount: _reports.length,
-      itemBuilder: (context, index) {
-        final report = _reports[index];
-        return Card(
-          margin: EdgeInsets.all(10),
-          child: ListTile(
-            title: Text('Reporte #${report.monitoreoId}'),
-            subtitle: Text('Apiario: ${report.apiarioNombre} - Colmena: ${report.hiveNumber}'),
-            trailing: Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ReportDetailPage(report: report),
-                ),
-              );
-            },
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(ApiarioTheme.getPadding(context)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_stats != null)
+            DashboardSummaryCard(stats: _stats!),
+          SizedBox(height: 24),
+          ApiariosSectionWidget(
+            apiarios: _apiarios,
+            crossAxisCount: ResponsiveBreakpoints.isDesktop(context) ? 2 : 1,
           ),
-        ).animate().fadeIn();
-      },
+          SizedBox(height: 24),
+          RecentMonitoreosWidget(monitoreos: _reports),
+          SizedBox(height: 24),
+          AlertsWidget(monitoreos: _reports),
+          SizedBox(height: 24),
+          WeatherWidget(),
+          SizedBox(height: 24),
+          ProductionChart(monitoreos: _reports),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error, color: Colors.red, size: 50),
+          SizedBox(height: 10),
+          Text('Error al cargar los reportes', style: GoogleFonts.poppins()),
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: _loadData,
+            child: Text('Reintentar', style: GoogleFonts.poppins()),
+          ),
+        ],
+      ),
     );
   }
 }

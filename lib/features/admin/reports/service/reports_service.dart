@@ -35,4 +35,40 @@ class ReportsService {
       throw Exception('Error de conexión: $e');
     }
   }
+
+  static Future<List<Apiario>> getApiarios() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/apiaries'),
+        headers: await _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Apiario.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al obtener apiarios: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
+
+  static Future<SystemStats> getSystemStats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/stats'),
+        headers: await _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return SystemStats.fromJson(data);
+      } else {
+        throw Exception('Error al obtener estadísticas: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
+    }
+  }
 }

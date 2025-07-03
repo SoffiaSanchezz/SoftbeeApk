@@ -7,7 +7,6 @@ import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.da
 import 'package:sotfbee/features/admin/monitoring/service/enhanced_voice_assistant_service.dart';
 import 'package:sotfbee/features/admin/monitoring/service/local_db_service.dart';
 
-
 class EnhancedMonitoreoScreen extends StatefulWidget {
   const EnhancedMonitoreoScreen({Key? key}) : super(key: key);
 
@@ -74,8 +73,8 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-        );
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
 
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
@@ -97,9 +96,11 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
       await mayaAssistant.initialize();
       await _checkConnection();
 
-      setState(() {
-        isInitialized = true;
-      });
+      if (mounted) {
+        setState(() {
+          isInitialized = true;
+        });
+      }
 
       _showSnackBar("Sistema inicializado correctamente", colorVerde);
     } catch (e) {
@@ -139,7 +140,9 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
     try {
       apiarios = await EnhancedApiService.obtenerApiarios();
       estadisticas = await EnhancedApiService.obtenerEstadisticas();
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
       debugPrint("✅ Datos iniciales cargados");
     } catch (e) {
       debugPrint("❌ Error al cargar datos: $e");
@@ -150,15 +153,20 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
   Future<void> _checkConnection() async {
     try {
       final connected = await EnhancedApiService.verificarConexion();
-      setState(() {
-        isConnected = connected;
-        connectionStatus = connected ? "Conectado al servidor" : "Modo offline";
-      });
+      if (mounted) {
+        setState(() {
+          isConnected = connected;
+          connectionStatus =
+              connected ? "Conectado al servidor" : "Modo offline";
+        });
+      }
     } catch (e) {
-      setState(() {
-        isConnected = false;
-        connectionStatus = "Sin conexión";
-      });
+      if (mounted) {
+        setState(() {
+          isConnected = false;
+          connectionStatus = "Sin conexión";
+        });
+      }
     }
   }
 
@@ -246,8 +254,8 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
               fontSize: isDesktop
                   ? 24
                   : isTablet
-                  ? 22
-                  : 20,
+                      ? 22
+                      : 20,
               color: Colors.white,
             ),
           ),
@@ -324,13 +332,13 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colorAmarillo.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.hive, size: 64, color: colorNaranja),
-              )
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorAmarillo.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.hive, size: 64, color: colorNaranja),
+          )
               .animate(onPlay: (controller) => controller.repeat())
               .rotate(duration: 2000.ms),
           SizedBox(height: 24),
@@ -435,78 +443,78 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
                       final isSelected = selectedApiario?.id == apiario.id;
 
                       return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedApiario = apiario;
-                              });
-                              _showSnackBar(
-                                "Apiario ${apiario.nombre} seleccionado",
-                                colorVerde,
-                              );
-                            },
-                            child: Container(
-                              width: 160,
-                              margin: EdgeInsets.only(right: 12),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? colorVerde.withOpacity(0.1)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? colorVerde
-                                      : colorAmbarMedio,
-                                  width: isSelected ? 3 : 1,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? colorVerde
-                                            : colorAmarillo,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        isSelected ? Icons.check : Icons.hive,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      apiario.nombre,
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12,
-                                        color: isSelected
-                                            ? colorVerde
-                                            : Colors.black87,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      apiario.ubicacion,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        color: Colors.black54,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                        onTap: () {
+                          setState(() {
+                            selectedApiario = apiario;
+                          });
+                          _showSnackBar(
+                            "Apiario ${apiario.nombre} seleccionado",
+                            colorVerde,
+                          );
+                        },
+                        child: Container(
+                          width: 160,
+                          margin: EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colorVerde.withOpacity(0.1)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? colorVerde
+                                  : colorAmbarMedio,
+                              width: isSelected ? 3 : 1,
                             ),
-                          )
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? colorVerde
+                                        : colorAmarillo,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isSelected ? Icons.check : Icons.hive,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  apiario.nombre,
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    color: isSelected
+                                        ? colorVerde
+                                        : Colors.black87,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  apiario.ubicacion,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    color: Colors.black54,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
                           .animate()
                           .fadeIn(
                             delay: Duration(milliseconds: 200 + (index * 100)),
@@ -576,96 +584,95 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
                     "Primero selecciona un apiario",
                     Colors.orange,
                   ),
-            child:
-                Container(
-                      width: isDesktop
-                          ? 200
-                          : isTablet
-                          ? 180
-                          : 160,
-                      height: isDesktop
-                          ? 200
-                          : isTablet
-                          ? 180
-                          : 160,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: selectedApiario == null
-                              ? [Colors.grey.shade300, Colors.grey.shade400]
-                              : isMayaActive
-                              ? [colorRojo, colorRojo.withOpacity(0.8)]
-                              : [colorVerde, colorVerde.withOpacity(0.8)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: selectedApiario == null
-                                ? Colors.grey.withOpacity(0.3)
-                                : (isMayaActive ? colorRojo : colorVerde)
-                                      .withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: isDesktop
-                                ? 160
-                                : isTablet
-                                ? 140
-                                : 120,
-                            height: isDesktop
-                                ? 160
-                                : isTablet
-                                ? 140
-                                : 120,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.2),
-                            ),
-                          ),
-                          Icon(
-                            selectedApiario == null
-                                ? Icons.lock
-                                : isMayaListening
-                                ? Icons.mic
-                                : isMayaActive
+            child: Container(
+              width: isDesktop
+                  ? 200
+                  : isTablet
+                      ? 180
+                      : 160,
+              height: isDesktop
+                  ? 200
+                  : isTablet
+                      ? 180
+                      : 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: selectedApiario == null
+                      ? [Colors.grey.shade300, Colors.grey.shade400]
+                      : isMayaActive
+                          ? [colorRojo, colorRojo.withOpacity(0.8)]
+                          : [colorVerde, colorVerde.withOpacity(0.8)],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: selectedApiario == null
+                        ? Colors.grey.withOpacity(0.3)
+                        : (isMayaActive ? colorRojo : colorVerde)
+                            .withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: isDesktop
+                        ? 160
+                        : isTablet
+                            ? 140
+                            : 120,
+                    height: isDesktop
+                        ? 160
+                        : isTablet
+                            ? 140
+                            : 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.2),
+                    ),
+                  ),
+                  Icon(
+                    selectedApiario == null
+                        ? Icons.lock
+                        : isMayaListening
+                            ? Icons.mic
+                            : isMayaActive
                                 ? Icons.stop
                                 : Icons.mic,
-                            size: isDesktop
-                                ? 80
-                                : isTablet
-                                ? 70
-                                : 60,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    )
-                    .animate(
-                      onPlay: (controller) => isMayaListening
-                          ? controller.repeat(reverse: true)
-                          : null,
-                    )
-                    .scale(
-                      begin: Offset(1, 1),
-                      end: Offset(1.1, 1.1),
-                      duration: 1000.ms,
-                    ),
+                    size: isDesktop
+                        ? 80
+                        : isTablet
+                            ? 70
+                            : 60,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            )
+                .animate(
+                  onPlay: (controller) => isMayaListening
+                      ? controller.repeat(reverse: true)
+                      : null,
+                )
+                .scale(
+                  begin: Offset(1, 1),
+                  end: Offset(1.1, 1.1),
+                  duration: 1000.ms,
+                ),
           ),
           SizedBox(height: 24),
           Text(
             selectedApiario == null
                 ? "Selecciona un apiario"
                 : isMayaActive
-                ? "Toca para detener"
-                : "Toca para iniciar",
+                    ? "Toca para detener"
+                    : "Toca para iniciar",
             style: GoogleFonts.poppins(
               fontSize: isDesktop ? 18 : 16,
               fontWeight: FontWeight.w600,
@@ -809,11 +816,13 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
     try {
       // Pasa el apiario seleccionado al asistente
       mayaAssistant.selectedApiario = selectedApiario;
-      
+
       await mayaAssistant.startMonitoringFlow();
-      setState(() {
-        isMayaActive = true;
-      });
+      if (mounted) {
+        setState(() {
+          isMayaActive = true;
+        });
+      }
       _showSnackBar(
         "Maya activada - Monitoreando ${selectedApiario!.nombre}",
         colorVerde,
@@ -826,10 +835,12 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
   Future<void> _stopMaya() async {
     try {
       await mayaAssistant.stopAssistant();
-      setState(() {
-        isMayaActive = false;
-        isMayaListening = false;
-      });
+      if (mounted) {
+        setState(() {
+          isMayaActive = false;
+          isMayaListening = false;
+        });
+      }
       _showSnackBar("Maya desactivada", Colors.grey);
     } catch (e) {
       _showSnackBar("Error al detener Maya: $e", colorRojo);
