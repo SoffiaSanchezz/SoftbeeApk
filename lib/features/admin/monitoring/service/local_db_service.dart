@@ -382,7 +382,17 @@ class LocalDBService {
       final db = await database;
       await db!.insert(
         'preguntas',
-        pregunta.toJson(),
+        {
+          'id': pregunta.id,
+          'texto': pregunta.texto,
+          'tipo_respuesta': pregunta.tipoRespuesta,
+          'seleccionada': pregunta.seleccionada ? 1 : 0, // Guardar como entero
+          'orden': pregunta.orden,
+          'activa': pregunta.activa ? 1 : 0,
+          'obligatoria': pregunta.obligatoria ? 1 : 0,
+          'apiario_id': pregunta.apiarioId,
+          'fecha_creacion': pregunta.fechaCreacion?.toIso8601String(),
+        },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       

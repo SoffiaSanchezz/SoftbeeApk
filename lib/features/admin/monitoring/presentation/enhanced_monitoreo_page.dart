@@ -807,6 +807,9 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
     }
 
     try {
+      // Pasa el apiario seleccionado al asistente
+      mayaAssistant.selectedApiario = selectedApiario;
+      
       await mayaAssistant.startMonitoringFlow();
       setState(() {
         isMayaActive = true;

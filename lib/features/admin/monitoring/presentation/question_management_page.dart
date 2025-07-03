@@ -800,6 +800,23 @@ class _QuestionsManagementScreenState extends State<QuestionsManagementScreen> {
                                   materialTapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
+                                Text(
+                                  'Activa',
+                                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
+                                ),
+                                SizedBox(height: 8),
+                                Switch(
+                                  value: pregunta.seleccionada,
+                                  onChanged: (value) =>
+                                      _togglePreguntaSeleccionada(pregunta, value),
+                                  activeColor: colorAmarilloOscuro,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                Text(
+                                  'Seleccionada',
+                                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
+                                ),
                                 PopupMenuButton<String>(
                                   icon: Icon(
                                     Icons.more_vert,
@@ -985,6 +1002,19 @@ class _QuestionsManagementScreenState extends State<QuestionsManagementScreen> {
       await _loadData();
     } catch (e) {
       _showSnackBar('Error al actualizar estado: $e', Colors.red);
+    }
+  }
+
+  Future<void> _togglePreguntaSeleccionada(Pregunta pregunta, bool seleccionada) async {
+    try {
+      final updatedPregunta = pregunta.copyWith(seleccionada: seleccionada);
+      await EnhancedApiService.actualizarPregunta(
+        pregunta.id,
+        updatedPregunta.toJson(),
+      );
+      await _loadData();
+    } catch (e) {
+      _showSnackBar('Error al actualizar estado de selección: $e', Colors.red);
     }
   }
 

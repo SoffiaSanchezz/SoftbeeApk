@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import '../models/enhanced_models.dart';
+import 'local_db_service.dart';
+ import 'package:flutter/foundation.dart'; 
 
 class EnhancedApiService {
   static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
@@ -103,7 +105,15 @@ class EnhancedApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Apiario.fromJson(json)).toList();
+        final apiarios = data.map((json) => Apiario.fromJson(json)).toList();
+        
+        // Guardar en la base de datos local
+        final dbService = LocalDBService();
+        for (final apiario in apiarios) {
+          await dbService.insertApiario(apiario);
+        }
+        
+        return apiarios;
       } else if (response.statusCode == 404) {
         return [];
       } else if (response.statusCode == 401) {
@@ -213,7 +223,15 @@ class EnhancedApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Colmena.fromJson(json)).toList();
+        final colmenas = data.map((json) => Colmena.fromJson(json)).toList();
+        
+        // Guardar en la base de datos local
+        final dbService = LocalDBService();
+        for (final colmena in colmenas) {
+          await dbService.insertColmena(colmena);
+        }
+        
+        return colmenas;
       }
       throw Exception('Error al obtener colmenas: ${response.statusCode}');
     } catch (e) {
@@ -288,6 +306,7 @@ class EnhancedApiService {
     int apiarioId, {
     bool soloActivas = true,
   }) async {
+    final dbService = LocalDBService();
     try {
       String url = '$_baseUrl/apiaries/$apiarioId/questions';
       if (soloActivas) {
@@ -300,14 +319,23 @@ class EnhancedApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Pregunta.fromJson(json)).toList();
+        final preguntas = data.map((json) => Pregunta.fromJson(json)).toList();
+        
+        // Guardar en la base de datos local
+        for (final pregunta in preguntas) {
+          await dbService.savePregunta(pregunta);
+        }
+        
+        return preguntas;
       } else {
         throw Exception(
-          'Error al obtener preguntas: ${response.statusCode} - ${response.body}',
+          'Error al obtener preguntas del servidor: ${response.statusCode} - ${response.body}',
         );
       }
     } catch (e) {
-      rethrow;
+      // Si falla la obtención del servidor, intentar desde la base de datos local
+      debugPrint("⚠️ Error al obtener preguntas del servidor, intentando desde local: $e");
+      return await dbService.getPreguntasByApiario(apiarioId);
     }
   }
 
@@ -374,8 +402,18 @@ class EnhancedApiService {
       if (response.statusCode != 200) {
         throw Exception('Error al actualizar pregunta: ${response.statusCode}');
       }
+
+      // Actualizar también en la base de datos local
+      final dbService = LocalDBService();
+      final pregunta = Pregunta.fromJson(data..['id'] = preguntaId); // Reconstruir Pregunta con ID
+      await dbService.savePregunta(pregunta);
+
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      // Si falla la actualización en el servidor, al menos guardar localmente
+      final dbService = LocalDBService();
+      final pregunta = Pregunta.fromJson(data..['id'] = preguntaId); // Reconstruir Pregunta con ID
+      await dbService.savePregunta(pregunta);
+      throw Exception('Error de conexión al actualizar pregunta: $e');
     }
   }
 

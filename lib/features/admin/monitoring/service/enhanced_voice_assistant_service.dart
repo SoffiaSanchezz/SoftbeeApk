@@ -110,10 +110,13 @@ class EnhancedVoiceAssistantService {
     });
   }
 
+  // Modo de depuración
+  bool isDebugMode = true;
+
   Future<void> _initializeSpeech() async {
     bool available = await speech.initialize(
       onStatus: (status) {
-        debugPrint("📢 Estado del reconocimiento: $status");
+        if (isDebugMode) debugPrint("📢 Estado del reconocimiento: $status");
         _updateListeningState(status == 'listening');
 
         if (status == 'done' || status == 'notListening') {
@@ -122,11 +125,12 @@ class EnhancedVoiceAssistantService {
         }
       },
       onError: (error) {
-        debugPrint("❌ Error en reconocimiento: $error");
+        if (isDebugMode) debugPrint("❌ Error en reconocimiento: $error");
         isListening = false;
         listeningController.add(false);
         _updateStatus("Error en reconocimiento de voz");
       },
+      debugLogging: isDebugMode, // Activar logs del plugin
     );
 
     if (!available) {
@@ -261,14 +265,21 @@ class EnhancedVoiceAssistantService {
 
       // Limpiar estado anterior
       respuestas.clear();
-      selectedApiario = null;
       selectedColmena = null;
       currentQuestionIndex = 0;
 
-      await speak(
-        "Iniciando el monitoreo de colmenas. Primero necesito que selecciones un apiario.",
-      );
-      await _selectApiario();
+      if (selectedApiario == null) {
+        await speak(
+          "Iniciando el monitoreo de colmenas. Primero necesito que selecciones un apiario.",
+        );
+        await _selectApiario();
+      } else {
+        await speak(
+          "Iniciando monitoreo para el apiario ${selectedApiario!.nombre}.",
+        );
+        await _loadColmenas();
+        await _selectColmena();
+      }
     } catch (e) {
       debugPrint("❌ Error en flujo de monitoreo: $e");
       await speak("Ha ocurrido un error. Por favor, intenta de nuevo.");
@@ -410,10 +421,11 @@ class EnhancedVoiceAssistantService {
   Future<void> _loadQuestions() async {
     try {
       if (selectedApiario != null) {
+        List<Pregunta> allQuestions = [];
         // Intentar cargar preguntas del servidor
         if (await EnhancedApiService.hasInternetConnection()) {
           try {
-            preguntasActivas = await EnhancedApiService.obtenerPreguntasApiario(
+            allQuestions = await EnhancedApiService.obtenerPreguntasApiario(
               selectedApiario!.id,
             );
           } catch (e) {
@@ -422,12 +434,15 @@ class EnhancedVoiceAssistantService {
         }
 
         // Si no hay preguntas del servidor, usar preguntas por defecto
-        if (preguntasActivas.isEmpty) {
-          preguntasActivas = await _getDefaultQuestions();
+        if (allQuestions.isEmpty) {
+          allQuestions = await _getDefaultQuestions();
         }
+        
+        // Filtrar solo las preguntas seleccionadas
+        preguntasActivas = allQuestions.where((p) => p.seleccionada).toList();
       }
 
-      debugPrint("✅ Cargadas ${preguntasActivas.length} preguntas");
+      debugPrint("✅ Cargadas ${preguntasActivas.length} preguntas seleccionadas");
     } catch (e) {
       debugPrint("❌ Error al cargar preguntas: $e");
       preguntasActivas = await _getDefaultQuestions();
@@ -689,9 +704,23 @@ class EnhancedVoiceAssistantService {
   }
 
   Future<String> listen({int duration = 5}) async {
-    if (isListening) return '';
+    if (isListening) {
+      debugPrint("🎤 [MAYA YA ESTÁ ESCUCHANDO...]");
+      return '';
+    }
 
     try {
+      // Añadir verificación de inicialización
+      if (!speech.isAvailable) {
+        debugPrint("⚠️ Speech recognition no estaba inicializado. Re-inicializando...");
+        await _initializeSpeech();
+        if (!speech.isAvailable) {
+          _updateStatus("No se pudo inicializar el reconocimiento de voz.");
+          await speak("No puedo acceder al micrófono en este momento.");
+          return '';
+        }
+      }
+
       isListening = true;
       listeningController.add(true);
       debugPrint("\n🎤 [MAYA ESCUCHANDO...]");
@@ -701,8 +730,9 @@ class EnhancedVoiceAssistantService {
 
       speech.listen(
         onResult: (result) {
+          recognizedText = result.recognizedWords.toLowerCase().trim();
+          if (isDebugMode) debugPrint("🎤 Parcial: $recognizedText (Confianza: ${result.confidence.toStringAsFixed(2)})");
           if (result.finalResult) {
-            recognizedText = result.recognizedWords.toLowerCase().trim();
             speechResultsController.add(recognizedText);
             debugPrint("👤 USUARIO: $recognizedText");
             if (!completer.isCompleted) {
@@ -713,8 +743,11 @@ class EnhancedVoiceAssistantService {
         listenFor: Duration(seconds: duration),
         pauseFor: Duration(seconds: 2),
         cancelOnError: true,
-        partialResults: false,
+        partialResults: true, // Habilitar resultados parciales
         localeId: 'es_ES',
+        onSoundLevelChange: (level) {
+          if (isDebugMode) debugPrint("🎤 Nivel de sonido: $level");
+        },
       );
 
       Timer(Duration(seconds: duration + 2), () {
@@ -722,6 +755,7 @@ class EnhancedVoiceAssistantService {
           isListening = false;
           listeningController.add(false);
           speech.stop();
+          debugPrint("🎤 [MAYA TIMEOUT] - Texto reconocido: $recognizedText");
           completer.complete(recognizedText);
         }
       });
