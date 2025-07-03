@@ -546,7 +546,7 @@ class _MonitoreoItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${monitoreo.apiarioNombre ?? 'Apiario'} - Colmena ${monitoreo.numeroColmena ?? monitoreo.idColmena}',
+                    '${monitoreo.apiarioNombre ?? 'Apiario'} - Colmena ${monitoreo.hiveNumber ?? monitoreo.colmenaId}',
                     style: ApiarioTheme.bodyStyle.copyWith(
                       fontSize: ApiarioTheme.getBodyFontSize(context),
                       fontWeight: FontWeight.w600,
@@ -606,10 +606,9 @@ class _MonitoreoItem extends StatelessWidget {
               Text('Apiario: ${monitoreo.apiarioNombre ?? 'N/A'}'),
               SizedBox(height: 8),
               Text(
-                'Colmena: ${monitoreo.numeroColmena ?? monitoreo.idColmena}',
+                'Colmena: ${monitoreo.hiveNumber ?? monitoreo.colmenaId}',
               ),
               SizedBox(height: 8),
-              Text('Sincronizado: ${monitoreo.sincronizado ? 'Sí' : 'No'}'),
               if (monitoreo.respuestas.isNotEmpty) ...[
                 SizedBox(height: 12),
                 Text(
@@ -732,10 +731,7 @@ class AlertsWidget extends StatelessWidget {
       alertas.add('$monitoreosAntiguos monitoreos tienen más de 30 días');
     }
 
-    final noSincronizados = monitoreos.where((m) => !m.sincronizado).length;
-    if (noSincronizados > 0) {
-      alertas.add('$noSincronizados monitoreos pendientes de sincronización');
-    }
+    
 
     final monitoreosRecientes = monitoreos
         .where((m) => now.difference(m.fecha).inDays <= 7)

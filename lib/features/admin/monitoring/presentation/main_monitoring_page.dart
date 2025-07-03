@@ -8,6 +8,7 @@ import 'package:sotfbee/features/admin/monitoring/presentation/enhanced_monitore
 import 'package:sotfbee/features/admin/monitoring/presentation/queen_calendar_page.dart';
 import 'package:sotfbee/features/admin/monitoring/presentation/question_management_page.dart';
 import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.dart';
+import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
 import '../models/enhanced_models.dart';
 
 class MainMonitoringScreen extends StatefulWidget {
@@ -267,7 +268,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withOpacity(0.3),
+            color: Colors.amber.withAlpha(76),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -315,7 +316,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
                       'Sistema de Gestión Apícola',
                       style: GoogleFonts.poppins(
                         fontSize: isDesktop ? 16 : 14,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withAlpha(204),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -527,7 +528,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
             Container(
               padding: EdgeInsets.all(isDesktop ? 12 : 8),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withAlpha(25),
                 borderRadius: BorderRadius.circular(isDesktop ? 12 : 8),
               ),
               child: Icon(icon, color: iconColor, size: isDesktop ? 24 : 20),
@@ -859,7 +860,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withAlpha(25),
           foregroundColor: color,
           padding: EdgeInsets.symmetric(
             vertical: isDesktop ? 20 : 16,
@@ -867,7 +868,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(isDesktop ? 16 : 12),
-            side: BorderSide(color: color.withOpacity(0.3)),
+            side: BorderSide(color: color.withAlpha(76)),
           ),
           elevation: 0,
         ),
@@ -938,6 +939,13 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const QueenCalendarScreen()),
+    );
+  }
+
+  void _navigateToReports() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => DashboardReportsPage()),
     );
   }
 

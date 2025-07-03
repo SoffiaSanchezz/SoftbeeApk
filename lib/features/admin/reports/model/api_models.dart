@@ -82,26 +82,22 @@ class Colmena {
 
 // Modelo para Monitoreo
 class Monitoreo {
-  final int id;
-  final int idColmena;
-  final int idApiario;
+  final int monitoreoId;
+  final int colmenaId;
+  final int apiarioId;
   final DateTime fecha;
   final List<RespuestaMonitoreo> respuestas;
-  final Map<String, dynamic>? datosAdicionales;
-  final bool sincronizado;
   final String? apiarioNombre;
-  final String? numeroColmena;
+  final String? hiveNumber;
 
   Monitoreo({
-    required this.id,
-    required this.idColmena,
-    required this.idApiario,
+    required this.monitoreoId,
+    required this.colmenaId,
+    required this.apiarioId,
     required this.fecha,
     required this.respuestas,
-    this.datosAdicionales,
-    required this.sincronizado,
     this.apiarioNombre,
-    this.numeroColmena,
+    this.hiveNumber,
   });
 
   factory Monitoreo.fromJson(Map<String, dynamic> json) {
@@ -113,32 +109,24 @@ class Monitoreo {
     }
 
     return Monitoreo(
-      id: json['id'] as int? ?? 0,
-      idColmena: json['id_colmena'] as int? ?? 0,
-      idApiario: json['id_apiario'] as int? ?? 0,
+      monitoreoId: json['monitoreo_id'] as int? ?? 0,
+      colmenaId: json['colmena_id'] as int? ?? 0,
+      apiarioId: json['apiario_id'] as int? ?? 0,
       fecha: DateTime.tryParse(json['fecha']?.toString() ?? '') ?? DateTime.now(),
       respuestas: respuestas,
-      datosAdicionales: json['datos_adicionales'] as Map<String, dynamic>?,
-      sincronizado: (json['sincronizado'] == 1 || json['sincronizado'] == true),
       apiarioNombre: json['apiario_nombre']?.toString(),
-      numeroColmena: json['numero_colmena']?.toString(),
+      hiveNumber: json['hive_number']?.toString(),
     );
   }
 }
 
 // Modelo para Respuesta de Monitoreo
 class RespuestaMonitoreo {
-  final int id;
-  final int monitoreoId;
-  final String preguntaId;
   final String preguntaTexto;
   final String? respuesta;
   final String tipoRespuesta;
 
   RespuestaMonitoreo({
-    required this.id,
-    required this.monitoreoId,
-    required this.preguntaId,
     required this.preguntaTexto,
     this.respuesta,
     required this.tipoRespuesta,
@@ -146,9 +134,6 @@ class RespuestaMonitoreo {
 
   factory RespuestaMonitoreo.fromJson(Map<String, dynamic> json) {
     return RespuestaMonitoreo(
-      id: json['id'] as int? ?? 0,
-      monitoreoId: json['monitoreo_id'] as int? ?? 0,
-      preguntaId: json['pregunta_id']?.toString() ?? '',
       preguntaTexto: json['pregunta_texto']?.toString() ?? '',
       respuesta: json['respuesta']?.toString(),
       tipoRespuesta: json['tipo_respuesta']?.toString() ?? '',

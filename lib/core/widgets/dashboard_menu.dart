@@ -45,7 +45,7 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       icon: Icons.insert_chart,
       color: Color(0xFFFFB700),
       description: 'Genera reportes detallados de producción',
-      route: DashboardScreen(),
+      route: DashboardReportsPage(),
     ),
     MenuItemData(
       title: 'Historial',

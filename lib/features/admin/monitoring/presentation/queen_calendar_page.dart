@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.dart';
 import 'package:sotfbee/features/admin/monitoring/widgets/enhanced_card_widget.dart';
+import 'package:sotfbee/features/admin/monitoring/service/notification_service.dart';
 import '../models/enhanced_models.dart';
 
 class QueenCalendarScreen extends StatefulWidget {
@@ -1082,6 +1083,15 @@ class _QueenCalendarScreenState extends State<QueenCalendarScreen>
       );
 
       await EnhancedApiService.crearNotificacionReina(nuevaNotificacion);
+
+      if (fechaVencimiento != null) {
+        NotificationService.scheduleNotification(
+          id: nuevaNotificacion.id,
+          title: nuevaNotificacion.titulo,
+          body: nuevaNotificacion.mensaje,
+          scheduledDate: fechaVencimiento,
+        );
+      }
 
       _showSnackBar(
         existingNotificacion != null

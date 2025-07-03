@@ -536,7 +536,7 @@ class _EnhancedMonitoreoScreenState extends State<EnhancedMonitoreoScreen>
               margin: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorVerde.withOpacity(0.1),
+                color: colorVerde.withAlpha(25),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: colorVerde, width: 2),
               ),
