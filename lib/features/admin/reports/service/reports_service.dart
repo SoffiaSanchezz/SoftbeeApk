@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/admin/reports/model/api_models.dart';
+import 'package:sotfbee/features/auth/data/datasources/user_service.dart';
 
 class ReportsService {
   static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
@@ -38,8 +39,11 @@ class ReportsService {
 
   static Future<List<Apiario>> getApiarios() async {
     try {
+      final user = await UserService.getCurrentUserProfile();
+      if (user == null) throw Exception('Usuario no autenticado');
+
       final response = await http.get(
-        Uri.parse('$_baseUrl/apiaries'),
+        Uri.parse('$_baseUrl/users/${user.id}/apiaries'),
         headers: await _headers,
       );
 

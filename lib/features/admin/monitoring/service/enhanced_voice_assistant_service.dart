@@ -40,6 +40,8 @@ class EnhancedVoiceAssistantService {
   int? selectedColmena;
   int currentQuestionIndex = 0;
   List<Pregunta> preguntasActivas = [];
+  int _currentColmenaIndex = 0;
+  bool _isInspectingAll = false;
 
   // Configuración de Maya
   static const String assistantName = "Maya";
@@ -379,7 +381,7 @@ class EnhancedVoiceAssistantService {
         .map((c) => c.numeroColmena.toString())
         .join(', ');
     final message =
-        "Colmenas disponibles: $colmenaNumbers. ¿Cuál quieres inspeccionar?";
+        "Colmenas disponibles: $colmenaNumbers. ¿Cuál quieres inspeccionar? o dí 'todas' para inspeccionarlas en orden.";
 
     _updateStatus("Seleccionando colmena...");
     await speak(message);
@@ -388,12 +390,19 @@ class EnhancedVoiceAssistantService {
     if (response.isNotEmpty) {
       await _processColmenaSelection(response);
     } else {
-      await speak("No escuché el número de colmena. Intentemos de nuevo.");
+      await speak("No escuché tu respuesta. Intentemos de nuevo.");
       await _selectColmena();
     }
   }
 
   Future<void> _processColmenaSelection(String text) async {
+    if (text.toLowerCase().contains('todas')) {
+      _isInspectingAll = true;
+      _currentColmenaIndex = 0;
+      await _inspectNextColmena();
+      return;
+    }
+
     final numeroColmena =
         palabrasANumero(text) ??
         int.tryParse(text.replaceAll(RegExp(r'[^0-9]'), ''));
@@ -418,6 +427,33 @@ class EnhancedVoiceAssistantService {
       if (response.isNotEmpty) {
         await _processColmenaSelection(response);
       }
+    }
+  }
+
+  Future<void> _inspectNextColmena() async {
+    if (_currentColmenaIndex >= colmenas.length) {
+      await speak("Se han inspeccionado todas las colmenas del apiario ${selectedApiario!.nombre}.");
+      _isInspectingAll = false;
+      await stopAssistant();
+      return;
+    }
+
+    final colmena = colmenas[_currentColmenaIndex];
+    selectedColmena = colmena.numeroColmena;
+    _updateStatus("Inspeccionando Colmena ${colmena.numeroColmena}");
+    await speak("Comenzando inspección de la colmena número ${colmena.numeroColmena}.");
+
+    // Reset for new inspection
+    respuestas.clear();
+    currentQuestionIndex = 0;
+
+    await _loadQuestions();
+    if (preguntasActivas.isEmpty) {
+      await speak("No hay preguntas para esta colmena. Pasando a la siguiente.");
+      _currentColmenaIndex++;
+      await _inspectNextColmena();
+    } else {
+      await _startQuestionFlow();
     }
   }
 
@@ -566,6 +602,10 @@ class EnhancedVoiceAssistantService {
   Future<void> _processFinalConfirmation(String text) async {
     if (confirmacionReconocida(text, 'confirmar')) {
       await _saveMonitoringData();
+      if (_isInspectingAll) {
+        _currentColmenaIndex++;
+        await _inspectNextColmena();
+      }
     } else if (confirmacionReconocida(text, 'repetir') ||
         confirmacionReconocida(text, 'cancelar')) {
       await speak("De acuerdo, vamos a repetir el monitoreo.");
@@ -620,6 +660,7 @@ class EnhancedVoiceAssistantService {
           }).toList(),
           apiarioNombre: selectedApiario!.nombre,
           hiveNumber: selectedColmena.toString(),
+          sincronizado: false,
         );
         monitoringCompletedController.add(report);
 
@@ -641,7 +682,9 @@ class EnhancedVoiceAssistantService {
       );
     }
 
-    await stopAssistant();
+    if (!_isInspectingAll) {
+      await stopAssistant();
+    }
   }
 
   void _syncInBackground() async {
@@ -649,10 +692,28 @@ class EnhancedVoiceAssistantService {
       if (await EnhancedApiService.hasInternetConnection()) {
         final pendientes = await dbService.getMonitoreosPendientes();
         if (pendientes.isNotEmpty) {
-          // Aquí implementarías la sincronización con el servidor
           debugPrint(
             "🔄 Sincronizando ${pendientes.length} monitoreos pendientes...",
           );
+          for (var monitoreoData in pendientes) {
+            try {
+              final serverId = await EnhancedApiService.createMonitoreo(
+                idColmena: monitoreoData['colmena_id'],
+                idApiario: monitoreoData['apiario_id'],
+                fecha: monitoreoData['fecha'],
+                respuestas: (monitoreoData['respuestas'] as List)
+                    .map((r) => Map<String, dynamic>.from(r))
+                    .toList(),
+              );
+              
+              if (serverId > 0) {
+                await dbService.markMonitoreoSincronizado(monitoreoData['id']);
+                debugPrint("✅ Monitoreo ${monitoreoData['id']} sincronizado con éxito. Server ID: $serverId");
+              }
+            } catch (e) {
+              debugPrint("❌ Error sincronizando monitoreo ${monitoreoData['id']}: $e");
+            }
+          }
         }
       }
     } catch (e) {

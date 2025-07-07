@@ -64,6 +64,13 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
       appBar: AppBar(
         title: Text('Reportes de Monitoreo', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         backgroundColor: ApiarioTheme.primaryColor,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _loadData,
+            tooltip: 'Actualizar reportes',
+          ),
+        ],
       ),
       body: _buildBody(),
     );
@@ -78,27 +85,31 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
       return _buildErrorWidget();
     }
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(ApiarioTheme.getPadding(context)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_stats != null)
-            DashboardSummaryCard(stats: _stats!),
-          SizedBox(height: 24),
-          ApiariosSectionWidget(
-            apiarios: _apiarios,
-            crossAxisCount: ResponsiveBreakpoints.isDesktop(context) ? 2 : 1,
-          ),
-          SizedBox(height: 24),
-          RecentMonitoreosWidget(monitoreos: _reports),
-          SizedBox(height: 24),
-          AlertsWidget(monitoreos: _reports),
-          SizedBox(height: 24),
-          WeatherWidget(),
-          SizedBox(height: 24),
-          ProductionChart(monitoreos: _reports),
-        ],
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(ApiarioTheme.getPadding(context)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_stats != null)
+              DashboardSummaryCard(stats: _stats!),
+            SizedBox(height: 24),
+            ApiariosSectionWidget(
+              apiarios: _apiarios,
+              crossAxisCount: ResponsiveBreakpoints.isDesktop(context) ? 2 : 1,
+            ),
+            SizedBox(height: 24),
+            RecentMonitoreosWidget(monitoreos: _reports),
+            SizedBox(height: 24),
+            AlertsWidget(monitoreos: _reports),
+            SizedBox(height: 24),
+            WeatherWidget(),
+            SizedBox(height: 24),
+            ProductionChart(monitoreos: _reports),
+          ],
+        ),
       ),
     );
   }

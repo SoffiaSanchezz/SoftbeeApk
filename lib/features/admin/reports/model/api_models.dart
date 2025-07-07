@@ -89,6 +89,7 @@ class Monitoreo {
   final List<RespuestaMonitoreo> respuestas;
   final String? apiarioNombre;
   final String? hiveNumber;
+  final bool sincronizado;
 
   Monitoreo({
     required this.monitoreoId,
@@ -98,6 +99,7 @@ class Monitoreo {
     required this.respuestas,
     this.apiarioNombre,
     this.hiveNumber,
+    required this.sincronizado,
   });
 
   factory Monitoreo.fromJson(Map<String, dynamic> json) {
@@ -116,6 +118,7 @@ class Monitoreo {
       respuestas: respuestas,
       apiarioNombre: json['apiario_nombre']?.toString(),
       hiveNumber: json['hive_number']?.toString(),
+      sincronizado: json['sincronizado'] as bool? ?? false,
     );
   }
 }
