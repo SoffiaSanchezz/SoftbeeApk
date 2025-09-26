@@ -653,6 +653,7 @@ class EnhancedVoiceAssistantService {
           fecha: DateTime.now(),
           respuestas: respuestas.map((r) {
             return reports_models.RespuestaMonitoreo(
+              preguntaId: r.preguntaId,
               preguntaTexto: r.preguntaTexto,
               respuesta: r.respuesta?.toString() ?? 'N/A',
               tipoRespuesta: r.tipoRespuesta ?? 'texto',

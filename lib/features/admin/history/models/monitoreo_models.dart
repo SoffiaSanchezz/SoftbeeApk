@@ -24,8 +24,8 @@ class MonitoreoModel {
   factory MonitoreoModel.fromJson(Map<String, dynamic> json) {
     return MonitoreoModel(
       id: json['id'] as int? ?? 0,
-      idColmena: json['id_colmena'] as int? ?? 0,
-      idApiario: json['id_apiario'] as int? ?? 0,
+      idColmena: json['beehive_id'] as int? ?? 0,
+      idApiario: json['apiary_id'] as int? ?? 0,
       fecha: json['fecha']?.toString() ?? DateTime.now().toIso8601String(),
       respuestas:
           (json['respuestas'] as List?)
@@ -35,7 +35,7 @@ class MonitoreoModel {
       datosAdicionales: json['datos_adicionales'] as Map<String, dynamic>?,
       sincronizado: json['sincronizado'] as bool? ?? false,
       apiarioNombre: json['apiario_nombre']?.toString(),
-      numeroColmena: json['numero_colmena'] as int?,
+      numeroColmena: json['hive_number'] as int?,
     );
   }
 

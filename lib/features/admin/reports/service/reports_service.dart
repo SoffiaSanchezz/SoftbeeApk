@@ -24,13 +24,23 @@ class ReportsService {
       final response = await http.get(
         Uri.parse('$_baseUrl/reports/monitoring'),
         headers: await _headers,
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => Monitoreo.fromJson(json)).toList();
       } else {
-        throw Exception('Error al obtener reportes: ${response.statusCode} - ${response.body}');
+        String errorMessage = 'Error al obtener reportes';
+        try {
+          final errorBody = json.decode(response.body);
+          if (errorBody['error'] != null) {
+            errorMessage = errorBody['error'];
+          }
+        } catch (e) {
+          // Fallback if body is not valid json
+          errorMessage = response.body;
+        }
+        throw Exception('$errorMessage (Código: ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
@@ -51,7 +61,16 @@ class ReportsService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((json) => Apiario.fromJson(json)).toList();
       } else {
-        throw Exception('Error al obtener apiarios: ${response.statusCode} - ${response.body}');
+        String errorMessage = 'Error al obtener apiarios';
+        try {
+          final errorBody = json.decode(response.body);
+          if (errorBody['error'] != null) {
+            errorMessage = errorBody['error'];
+          }
+        } catch (e) {
+          errorMessage = response.body;
+        }
+        throw Exception('$errorMessage (Código: ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
@@ -69,7 +88,16 @@ class ReportsService {
         final Map<String, dynamic> data = json.decode(response.body);
         return SystemStats.fromJson(data);
       } else {
-        throw Exception('Error al obtener estadísticas: ${response.statusCode} - ${response.body}');
+        String errorMessage = 'Error al obtener estadísticas';
+        try {
+          final errorBody = json.decode(response.body);
+          if (errorBody['error'] != null) {
+            errorMessage = errorBody['error'];
+          }
+        } catch (e) {
+          errorMessage = response.body;
+        }
+        throw Exception('$errorMessage (Código: ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');

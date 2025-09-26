@@ -6,7 +6,7 @@ import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dar
 
 class ApiService {
   static const String baseUrl =
-      'https://softbee-back-end-1.onrender.com/api'; // Reemplaza con tu URL de Apiary
+      'https://softbee-back-end.onrender.com/api'; // Reemplaza con tu URL de Apiary
   static const String flaskBaseUrl =
       'https://softbee-back-end.onrender.com/api'; // URL de tu backend Flask
 
@@ -27,8 +27,8 @@ class ApiService {
     try {
       // Intentar obtener datos del servidor
       final response = await http
-          .get(Uri.parse('$baseUrl/monitoreos'), headers: await _headers)
-          .timeout(Duration(seconds: 10));
+          .get(Uri.parse('$baseUrl/reports/monitoring'), headers: await _headers)
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -58,7 +58,7 @@ class ApiService {
             Uri.parse('$baseUrl/apiarios/$apiarioId/monitoreos'),
             headers: await _headers,
           )
-          .timeout(Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -82,7 +82,7 @@ class ApiService {
             headers: await _headers,
             body: json.encode(monitoreo.toJson()),
           )
-          .timeout(Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
@@ -121,7 +121,7 @@ class ApiService {
             Uri.parse('$baseUrl/apiarios/$apiarioId/questions'),
             headers: await _headers,
           )
-          .timeout(Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -197,7 +197,7 @@ class ApiService {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/stats'), headers: await _headers)
-          .timeout(Duration(seconds: 10));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         return json.decode(response.body);

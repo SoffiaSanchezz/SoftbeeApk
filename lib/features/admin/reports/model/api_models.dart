@@ -111,9 +111,9 @@ class Monitoreo {
     }
 
     return Monitoreo(
-      monitoreoId: json['monitoreo_id'] as int? ?? 0,
-      colmenaId: json['colmena_id'] as int? ?? 0,
-      apiarioId: json['apiario_id'] as int? ?? 0,
+      monitoreoId: json['id'] as int? ?? 0,
+      colmenaId: json['beehive_id'] as int? ?? 0,
+      apiarioId: json['apiary_id'] as int? ?? 0,
       fecha: DateTime.tryParse(json['fecha']?.toString() ?? '') ?? DateTime.now(),
       respuestas: respuestas,
       apiarioNombre: json['apiario_nombre']?.toString(),
@@ -125,11 +125,17 @@ class Monitoreo {
 
 // Modelo para Respuesta de Monitoreo
 class RespuestaMonitoreo {
+  final int? id;
+  final int? monitoreoId;
+  final String preguntaId;
   final String preguntaTexto;
   final String? respuesta;
   final String tipoRespuesta;
 
   RespuestaMonitoreo({
+    this.id,
+    this.monitoreoId,
+    required this.preguntaId,
     required this.preguntaTexto,
     this.respuesta,
     required this.tipoRespuesta,
@@ -137,6 +143,9 @@ class RespuestaMonitoreo {
 
   factory RespuestaMonitoreo.fromJson(Map<String, dynamic> json) {
     return RespuestaMonitoreo(
+      id: json['id'] as int?,
+      monitoreoId: json['monitoreo_id'] as int?,
+      preguntaId: json['pregunta_id']?.toString() ?? '',
       preguntaTexto: json['pregunta_texto']?.toString() ?? '',
       respuesta: json['respuesta']?.toString(),
       tipoRespuesta: json['tipo_respuesta']?.toString() ?? '',

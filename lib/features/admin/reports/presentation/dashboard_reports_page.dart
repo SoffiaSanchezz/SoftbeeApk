@@ -51,7 +51,7 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
     }
@@ -85,6 +85,43 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
       return _buildErrorWidget();
     }
 
+    if (_reports.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inbox_outlined, size: 80, color: Colors.grey[400]),
+              SizedBox(height: 20),
+              Text(
+                'No hay informes disponibles',
+                style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Cuando registres un monitoreo, tus informes aparecerán aquí.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[500]),
+              ),
+              SizedBox(height: 30),
+              ElevatedButton.icon(
+                onPressed: _loadData,
+                icon: Icon(Icons.refresh),
+                label: Text('Actualizar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ApiarioTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: SingleChildScrollView(
@@ -116,18 +153,38 @@ class _DashboardReportsPageState extends State<DashboardReportsPage> {
 
   Widget _buildErrorWidget() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error, color: Colors.red, size: 50),
-          SizedBox(height: 10),
-          Text('Error al cargar los reportes', style: GoogleFonts.poppins()),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _loadData,
-            child: Text('Reintentar', style: GoogleFonts.poppins()),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 60),
+            SizedBox(height: 16),
+            Text(
+              'Error al Cargar Reportes',
+              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red[700]),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              _error ?? 'Ocurrió un error desconocido.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadData,
+              icon: Icon(Icons.refresh),
+              label: Text('Reintentar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ApiarioTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

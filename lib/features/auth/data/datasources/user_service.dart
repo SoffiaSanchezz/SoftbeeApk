@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'dart:io' if (dart.library.html) 'dart:html' as html;
+// import 'dart:io' if (dart.library.html) 'dart:html' as html;
 
 import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
@@ -10,7 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
 class UserService {
-  static const String _baseUrl = 'https://softbee-back-end-1.onrender.com/api';
+  static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
   static const Duration _timeoutDuration = Duration(seconds: 30);
 
   // Obtener el perfil del usuario actual

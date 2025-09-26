@@ -28,7 +28,7 @@ class _HistorialInspeccionesScreenModifiedState
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Historial de Inspecciones',
+          'Historial de Reportes',
           style: GoogleFonts.concertOne(
             color: Colors.white,
             fontSize: 22,
@@ -440,7 +440,7 @@ class _HistorialInspeccionesScreenModifiedState
               Icon(Icons.assignment_outlined, size: 64, color: Colors.grey),
               SizedBox(height: 16),
               Text(
-                'No hay inspecciones registradas',
+                'No hay ningún informe disponible',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   color: Colors.grey[600],
@@ -448,11 +448,12 @@ class _HistorialInspeccionesScreenModifiedState
               ),
               SizedBox(height: 8),
               Text(
-                'Agrega tu primera inspección',
+                'Cuando registres un monitoreo, tus informes aparecerán aquí.',
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: 8,
                   color: Colors.grey[500],
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
