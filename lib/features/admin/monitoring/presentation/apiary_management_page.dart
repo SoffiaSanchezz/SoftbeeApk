@@ -7,7 +7,8 @@ import 'package:sotfbee/features/admin/monitoring/widgets/enhanced_card_widget.d
 import '../models/enhanced_models.dart';
 
 class ApiariosManagementScreen extends StatefulWidget {
-  const ApiariosManagementScreen({Key? key}) : super(key: key);
+  final Apiario? apiario;
+  const ApiariosManagementScreen({Key? key, this.apiario}) : super(key: key);
 
   @override
   _ApiariosManagementScreenState createState() =>
@@ -57,7 +58,11 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
 
   Future<void> _loadApiarios() async {
     try {
-      apiarios = await EnhancedApiService.obtenerApiarios();
+      if (widget.apiario != null) {
+        apiarios = [widget.apiario!];
+      } else {
+        apiarios = await EnhancedApiService.obtenerApiarios();
+      }
       _filterApiarios();
       setState(() {});
     } catch (e) {
@@ -81,8 +86,8 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
   void _filterApiarios() {
     final query = _searchController.text.toLowerCase();
     filteredApiarios = apiarios.where((apiario) {
-      return apiario.nombre.toLowerCase().contains(query) ||
-          apiario.ubicacion.toLowerCase().contains(query);
+      return apiario.name.toLowerCase().contains(query) ||
+          (apiario.location?.toLowerCase() ?? '').contains(query);
     }).toList();
   }
 
@@ -248,12 +253,18 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
   }
 
   Widget _buildDesktopGrid() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // 3 columnas para desktop grande, 2 para tablet
+    final crossAxisCount = screenWidth > 1200 ? 3 : 2;
+    // Aspect ratio más pequeño para cards más compactas
+    final childAspectRatio = screenWidth > 1200 ? 2.8 : 2.2;
+
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 1.3,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: filteredApiarios.length,
       itemBuilder: (context, index) {
@@ -275,6 +286,213 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
   }
 
   Widget _buildApiarioCard(Apiario apiario, int index, bool isDesktop) {
+    if (isDesktop) {
+      // Layout horizontal optimizado para desktop/tablet
+      return Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: InkWell(
+              onTap: () => _showApiarioDetails(apiario),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.white, colorAmbarClaro.withOpacity(0.3)],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Icono del apiario
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorAmarillo.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.location_on,
+                        color: colorNaranja,
+                        size: 28,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+
+                    // Información principal
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            apiario.name,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.place,
+                                size: 14,
+                                color: Colors.grey[600],
+                              ),
+                              SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  apiario.location ?? '',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 12,
+                                color: Colors.grey[500],
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                apiario.createdAt?.toString().split(' ')[0] ??
+                                    'N/A',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Botones de acción
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Botón de colmenas
+                        IconButton(
+                          icon: Icon(
+                            Icons.hive,
+                            color: colorAmarillo,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ColmenasManagementScreen(apiario: apiario),
+                              ),
+                            );
+                          },
+                          tooltip: 'Ver Colmenas',
+                          style: IconButton.styleFrom(
+                            backgroundColor: colorAmarillo.withOpacity(0.1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        // Botón de editar
+                        IconButton(
+                          icon: Icon(Icons.edit, color: colorNaranja, size: 20),
+                          onPressed: () => _showApiarioDialog(apiario: apiario),
+                          tooltip: 'Editar',
+                          style: IconButton.styleFrom(
+                            backgroundColor: colorNaranja.withOpacity(0.1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        // Menú de más opciones
+                        PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, size: 20),
+                          tooltip: 'Más opciones',
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'delete':
+                                _confirmDelete(apiario);
+                                break;
+                              case 'details':
+                                _showApiarioDetails(apiario);
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 'details',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info,
+                                    color: Colors.blue,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Ver Detalles',
+                                    style: GoogleFonts.poppins(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Eliminar',
+                                    style: GoogleFonts.poppins(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .animate()
+          .fadeIn(
+            delay: Duration(milliseconds: 100 * index),
+            duration: 600.ms,
+          )
+          .slideX(begin: 0.2, end: 0);
+    }
+
+    // Layout vertical para móvil (sin cambios)
     return Card(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -284,7 +502,7 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
             onTap: () => _showApiarioDetails(apiario),
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: EdgeInsets.all(isDesktop ? 16 : 12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 gradient: LinearGradient(
@@ -307,7 +525,7 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
                         child: Icon(
                           Icons.location_on,
                           color: colorNaranja,
-                          size: isDesktop ? 20 : 18,
+                          size: 18,
                         ),
                       ),
                       SizedBox(width: 12),
@@ -316,9 +534,9 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              apiario.nombre,
+                              apiario.name,
                               style: GoogleFonts.poppins(
-                                fontSize: isDesktop ? 16 : 14,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
@@ -326,9 +544,9 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              apiario.ubicacion,
+                              apiario.location ?? '',
                               style: GoogleFonts.poppins(
-                                fontSize: isDesktop ? 12 : 11,
+                                fontSize: 11,
                                 color: Colors.black54,
                               ),
                               maxLines: 2,
@@ -366,15 +584,15 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
                             value: 'colmenas',
                             child: GestureDetector(
                               onTap: () {
-                                Navigator.pop(
-                                  context,
-                                ); // Cierra el menú emergente
+                                Navigator.pop(context);
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        ColmenasManagementScreen(),
-                                  ), // Reemplaza con tu widget de destino
+                                        ColmenasManagementScreen(
+                                          apiario: apiario,
+                                        ),
+                                  ),
                                 );
                               },
                               child: Row(
@@ -407,29 +625,6 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
                       ),
                     ],
                   ),
-
-                  if (isDesktop) ...[
-                    SizedBox(height: 12),
-                    Divider(),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Creado: ${apiario.fechaCreacion?.toString().split(' ')[0] ?? 'N/A'}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -448,8 +643,8 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
     final isEditing = apiario != null;
 
     if (isEditing) {
-      _nombreController.text = apiario.nombre;
-      _ubicacionController.text = apiario.ubicacion;
+      _nombreController.text = apiario.name;
+      _ubicacionController.text = apiario.location ?? '';
     } else {
       _nombreController.clear();
       _ubicacionController.clear();
@@ -571,7 +766,7 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
                         Icon(Icons.save, size: 18),
                         SizedBox(width: 8),
                         Text(
-                          isEditing ? 'Actualizar' : 'Crear',
+                          apiario != null ? 'Actualizar' : 'Crear',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
@@ -643,7 +838,7 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         content: Text(
-          '¿Estás seguro de que deseas eliminar el apiario "${apiario.nombre}"?',
+          '¿Estás seguro de que deseas eliminar el apiario "${apiario.name}"?',
           style: GoogleFonts.poppins(),
         ),
         actions: [
@@ -692,20 +887,22 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          apiario.nombre,
+          apiario.name,
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Ubicación:', apiario.ubicacion),
-            _buildDetailRow('ID:', apiario.id.toString()),
-            _buildDetailRow(
-              'Fecha de creación:',
-              apiario.fechaCreacion?.toString().split(' ')[0] ?? 'N/A',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('Ubicación:', apiario.location ?? ''),
+              _buildDetailRow('ID:', apiario.id.toString()),
+              _buildDetailRow(
+                'Fecha de creación:',
+                apiario.createdAt?.toString().split(' ')[0] ?? 'N/A',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -736,7 +933,12 @@ class _ApiariosManagementScreenState extends State<ApiariosManagementScreen>
 
   // Mostrar colmenas del apiario
   void _showColmenas(Apiario apiario) {
-    _showSnackBar('Función de gestión de colmenas en desarrollo', Colors.blue);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ColmenasManagementScreen(apiario: apiario),
+      ),
+    );
   }
 
   // Sincronizar datos

@@ -6,7 +6,8 @@ import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.da
 import '../models/enhanced_models.dart';
 
 class ColmenasManagementScreen extends StatefulWidget {
-  const ColmenasManagementScreen({Key? key}) : super(key: key);
+  final Apiario? apiario;
+  const ColmenasManagementScreen({Key? key, this.apiario}) : super(key: key);
 
   @override
   _ColmenasManagementScreenState createState() =>
@@ -65,56 +66,29 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
   Future<void> _loadData() async {
     try {
       apiarios = await EnhancedApiService.obtenerApiarios();
-      // Cargar colmenas de todos los apiarios
-      List<Colmena> todasColmenas = [];
-      for (var apiario in apiarios) {
-        final colmenasApiario = await EnhancedApiService.obtenerColmenas(
-          apiario.id,
-        );
-        todasColmenas.addAll(colmenasApiario);
+      if (widget.apiario != null) {
+        // If an apiary is passed, load only its beehives
+        colmenas = await EnhancedApiService.obtenerColmenas(widget.apiario!.id);
+        selectedApiarioId =
+            widget.apiario!.id; // Pre-select the apiary in the dropdown
+      } else {
+        // Otherwise, load all beehives from all apiaries
+        List<Colmena> todasColmenas = [];
+        for (var apiario in apiarios) {
+          final colmenasApiario = await EnhancedApiService.obtenerColmenas(
+            apiario.id,
+          );
+          todasColmenas.addAll(colmenasApiario);
+        }
+        colmenas = todasColmenas;
       }
-      colmenas = todasColmenas;
       _filterColmenas();
       setState(() {});
     } catch (e) {
       debugPrint("❌ Error al cargar datos: $e");
-      // Datos de ejemplo para desarrollo
-      apiarios = [
-        Apiario(id: 1, nombre: "Apiario Norte", ubicacion: "Sector La Montaña"),
-        Apiario(id: 2, nombre: "Apiario Sur", ubicacion: "Valle del Río"),
-      ];
-      colmenas = [
-        Colmena(
-          id: 1,
-          numeroColmena: 1,
-          idApiario: 1,
-          metadatos: {
-            'nivel_actividad': 'Alta',
-            'poblacion_abejas': 'Alta',
-            'cuadros_alimento': 8,
-            'cuadros_cria': 6,
-            'estado_colmena': 'Cámara de cría y producción',
-            'estado_salud': 'Ninguno',
-            'camara_produccion': 'Si',
-            'observaciones': 'Colmena en excelente estado',
-          },
-        ),
-        Colmena(
-          id: 2,
-          numeroColmena: 2,
-          idApiario: 1,
-          metadatos: {
-            'nivel_actividad': 'Media',
-            'poblacion_abejas': 'Media',
-            'cuadros_alimento': 6,
-            'cuadros_cria': 4,
-            'estado_colmena': 'Cámara de cría',
-            'estado_salud': 'Presencia barroa',
-            'camara_produccion': 'No',
-            'observaciones': 'Requiere tratamiento para varroa',
-          },
-        ),
-      ];
+      // Fallback to empty lists if there's an error
+      apiarios = [];
+      colmenas = [];
       _filterColmenas();
       setState(() {});
     }
@@ -139,9 +113,9 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
       final apiarioNombre = apiarios
           .firstWhere(
             (a) => a.id == colmena.idApiario,
-            orElse: () => Apiario(id: 0, nombre: '', ubicacion: ''),
+            orElse: () => Apiario(id: 0, name: '', location: ''),
           )
-          .nombre
+          .name
           .toLowerCase();
 
       return colmena.numeroColmena.toString().contains(query) ||
@@ -347,7 +321,7 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      'Gestión de Colmenas',
+                      widget.apiario?.name ?? 'Gestión de Colmenas',
                       style: GoogleFonts.poppins(
                         fontSize: isDesktop ? 28 : (isTablet ? 26 : 24),
                         fontWeight: FontWeight.bold,
@@ -356,7 +330,9 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
                       textAlign: TextAlign.center,
                     ),
                     Text(
-                      'Administra todas tus colmenas',
+                      widget.apiario != null
+                          ? 'Colmenas en ${widget.apiario!.name}'
+                          : 'Administra todas tus colmenas',
                       style: GoogleFonts.poppins(
                         fontSize: isDesktop ? 16 : 14,
                         color: Colors.white.withOpacity(0.8),
@@ -499,7 +475,13 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
   Widget _buildSearchSection(bool isDesktop, bool isTablet) {
     return Column(
       children: [
-        _buildSectionTitle('Buscar Colmenas', Icons.search_outlined, isDesktop),
+        _buildSectionTitle(
+          widget.apiario != null
+              ? 'Buscar en ${widget.apiario!.name}'
+              : 'Buscar Colmenas',
+          Icons.search_outlined,
+          isDesktop,
+        ),
         SizedBox(height: isDesktop ? 16 : 12),
         _buildSearchCard(isDesktop, isTablet),
       ],
@@ -579,7 +561,13 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildSectionTitle('Colmenas', Icons.hive_outlined, isDesktop),
+            _buildSectionTitle(
+              widget.apiario != null
+                  ? 'Colmenas de ${widget.apiario!.name}'
+                  : 'Colmenas',
+              Icons.hive_outlined,
+              isDesktop,
+            ),
             ElevatedButton.icon(
               onPressed: () => _showColmenaDialog(),
               icon: const Icon(Icons.add),
@@ -616,7 +604,7 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 1.2,
+          childAspectRatio: 1.0,
         ),
         itemCount: filteredColmenas.length,
         itemBuilder: (context, index) {
@@ -713,14 +701,15 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
   ) {
     final apiario = apiarios.firstWhere(
       (a) => a.id == colmena.idApiario,
-      orElse: () => Apiario(id: 0, nombre: 'Desconocido', ubicacion: ''),
+      orElse: () => Apiario(id: 0, name: 'Desconocido', location: ''),
     );
 
-    final nivelActividad = colmena.metadatos?['nivel_actividad'] ?? 'Media';
-    final estadoSalud = colmena.metadatos?['estado_salud'] ?? 'Ninguno';
-    final camaraProduccion = colmena.metadatos?['camara_produccion'] ?? 'No';
-    final cuadrosAlimento = colmena.metadatos?['cuadros_alimento'] ?? 0;
-    final cuadrosCria = colmena.metadatos?['cuadros_cria'] ?? 0;
+    final nivelActividad = colmena.metadatos?['activity_level'] ?? 'Media';
+    final estadoSalud = colmena.metadatos?['health_status'] ?? 'Ninguno';
+    final camaraProduccion =
+        colmena.metadatos?['has_production_chamber'] ?? 'No';
+    final cuadrosAlimento = colmena.metadatos?['food_frames'] ?? 0;
+    final cuadrosCria = colmena.metadatos?['brood_frames'] ?? 0;
 
     return Container(
           width: double.infinity,
@@ -769,7 +758,7 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
                           ),
                         ),
                         Text(
-                          apiario.nombre,
+                          apiario.name,
                           style: GoogleFonts.poppins(
                             fontSize: isDesktop ? 14 : 12,
                             color: Colors.black54,
@@ -1103,17 +1092,17 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
     if (isEditing) {
       _numeroColmenaController.text = colmena.numeroColmena.toString();
       selectedApiarioId = colmena.idApiario;
-      nivelActividad = colmena.metadatos?['nivel_actividad'];
-      poblacionAbejas = colmena.metadatos?['poblacion_abejas'];
+      nivelActividad = colmena.metadatos?['activity_level'];
+      poblacionAbejas = colmena.metadatos?['bee_population'];
       _cuadrosAlimentoController.text =
-          colmena.metadatos?['cuadros_alimento']?.toString() ?? '';
+          colmena.metadatos?['food_frames']?.toString() ?? '';
       _cuadrosCriaController.text =
-          colmena.metadatos?['cuadros_cria']?.toString() ?? '';
-      estadoColmena = colmena.metadatos?['estado_colmena'];
-      estadoSalud = colmena.metadatos?['estado_salud'];
-      camaraProduccion = colmena.metadatos?['camara_produccion'];
+          colmena.metadatos?['brood_frames']?.toString() ?? '';
+      estadoColmena = colmena.metadatos?['hive_status'];
+      estadoSalud = colmena.metadatos?['health_status'];
+      camaraProduccion = colmena.metadatos?['has_production_chamber'];
       _observacionesController.text =
-          colmena.metadatos?['observaciones']?.toString() ?? '';
+          colmena.metadatos?['observations']?.toString() ?? '';
     } else {
       _clearForm();
     }
@@ -1204,7 +1193,7 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
                   items: apiarios.map((apiario) {
                     return DropdownMenuItem<int>(
                       value: apiario.id,
-                      child: Text(apiario.nombre, style: GoogleFonts.poppins()),
+                      child: Text(apiario.name, style: GoogleFonts.poppins()),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -1539,15 +1528,15 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
 
   void _clearForm() {
     _numeroColmenaController.clear();
-    _cuadrosAlimentoController.clear();
-    _cuadrosCriaController.clear();
+    _cuadrosAlimentoController.text = '0';
+    _cuadrosCriaController.text = '0';
     _observacionesController.clear();
-    selectedApiarioId = null;
-    nivelActividad = null;
-    poblacionAbejas = null;
-    estadoColmena = null;
-    estadoSalud = null;
-    camaraProduccion = null;
+    selectedApiarioId = widget.apiario?.id;
+    nivelActividad = 'Media';
+    poblacionAbejas = 'Media';
+    estadoColmena = 'Cámara de cría';
+    estadoSalud = 'Ninguno';
+    camaraProduccion = 'No';
   }
 
   // Guardar colmena
@@ -1652,7 +1641,7 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
   void _showColmenaDetails(Colmena colmena) {
     final apiario = apiarios.firstWhere(
       (a) => a.id == colmena.idApiario,
-      orElse: () => Apiario(id: 0, nombre: 'Desconocido', ubicacion: ''),
+      orElse: () => Apiario(id: 0, name: 'Desconocido', location: ''),
     );
 
     showDialog(
@@ -1668,41 +1657,41 @@ class _ColmenasManagementScreenState extends State<ColmenasManagementScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow('Apiario:', apiario.nombre),
+              _buildDetailRow('Apiario:', apiario.name),
               _buildDetailRow('ID:', colmena.id.toString()),
               _buildDetailRow(
                 'Nivel de Actividad:',
-                colmena.metadatos?['nivel_actividad'] ?? 'N/A',
+                colmena.metadatos?['activity_level'] ?? 'N/A',
               ),
               _buildDetailRow(
                 'Población de Abejas:',
-                colmena.metadatos?['poblacion_abejas'] ?? 'N/A',
+                colmena.metadatos?['bee_population'] ?? 'N/A',
               ),
               _buildDetailRow(
                 'Cuadros de Alimento:',
-                colmena.metadatos?['cuadros_alimento']?.toString() ?? '0',
+                colmena.metadatos?['food_frames']?.toString() ?? '0',
               ),
               _buildDetailRow(
                 'Cuadros de Cría:',
-                colmena.metadatos?['cuadros_cria']?.toString() ?? '0',
+                colmena.metadatos?['brood_frames']?.toString() ?? '0',
               ),
               _buildDetailRow(
                 'Estado de la Colmena:',
-                colmena.metadatos?['estado_colmena'] ?? 'N/A',
+                colmena.metadatos?['hive_status'] ?? 'N/A',
               ),
               _buildDetailRow(
                 'Estado de Salud:',
-                colmena.metadatos?['estado_salud'] ?? 'N/A',
+                colmena.metadatos?['health_status'] ?? 'N/A',
               ),
               _buildDetailRow(
                 'Cámara de Producción:',
-                colmena.metadatos?['camara_produccion'] ?? 'N/A',
+                colmena.metadatos?['has_production_chamber'] ?? 'N/A',
               ),
-              if (colmena.metadatos?['observaciones'] != null &&
-                  colmena.metadatos!['observaciones'].toString().isNotEmpty)
+              if (colmena.metadatos?['observations'] != null &&
+                  colmena.metadatos!['observations'].toString().isNotEmpty)
                 _buildDetailRow(
                   'Observaciones:',
-                  colmena.metadatos!['observaciones'].toString(),
+                  colmena.metadatos!['observations'].toString(),
                 ),
               _buildDetailRow(
                 'Fecha de creación:',

@@ -243,7 +243,7 @@ class _QueenCalendarScreenState extends State<QueenCalendarScreen>
                       return DropdownMenuItem<int?>(
                         value: apiario.id,
                         child: Text(
-                          apiario.nombre,
+                          apiario.name,
                           style: GoogleFonts.poppins(fontSize: 12),
                         ),
                       );
@@ -722,31 +722,34 @@ class _QueenCalendarScreenState extends State<QueenCalendarScreen>
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              notificacion.mensaje,
-              style: GoogleFonts.poppins(fontSize: 14, height: 1.5),
-            ),
-            SizedBox(height: 16),
-            _buildDetailRow('Tipo:', _getTypeLabel(notificacion.tipo)),
-            _buildDetailRow(
-              'Prioridad:',
-              _getPriorityLabel(notificacion.prioridad),
-            ),
-            _buildDetailRow('Creada:', _formatDate(notificacion.fechaCreacion)),
-            if (notificacion.fechaVencimiento != null)
-              _buildDetailRow(
-                'Vence:',
-                _formatDate(notificacion.fechaVencimiento!),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notificacion.mensaje,
+                style: GoogleFonts.poppins(fontSize: 14, height: 1.5),
               ),
-            _buildDetailRow(
-              'Estado:',
-              notificacion.leida ? 'Leída' : 'Pendiente',
-            ),
-          ],
+              SizedBox(height: 16),
+              _buildDetailRow('Tipo:', _getTypeLabel(notificacion.tipo)),
+              _buildDetailRow(
+                'Prioridad:',
+                _getPriorityLabel(notificacion.prioridad),
+              ),
+              _buildDetailRow(
+                  'Creada:', _formatDate(notificacion.fechaCreacion)),
+              if (notificacion.fechaVencimiento != null)
+                _buildDetailRow(
+                  'Vence:',
+                  _formatDate(notificacion.fechaVencimiento!),
+                ),
+              _buildDetailRow(
+                'Estado:',
+                notificacion.leida ? 'Leída' : 'Pendiente',
+              ),
+            ],
+          ),
         ),
         actions: [
           if (!notificacion.leida)

@@ -23,9 +23,13 @@ class InventoryItem {
       itemName: json['name']?.toString() ?? '',
       quantity: json['quantity'] as int? ?? 0,
       unit: json['unit']?.toString() ?? 'unit',
-      apiaryId: json['apiary_id'] as int? ?? 1,
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      apiaryId: json['apiary_id'] as int? ?? 0,
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -42,11 +46,7 @@ class InventoryItem {
   }
 
   Map<String, dynamic> toCreateJson() {
-    return {
-      'name': itemName,
-      'quantity': quantity,
-      'unit': unit,
-    };
+    return {'name': itemName, 'quantity': quantity, 'unit': unit};
   }
 
   Map<String, dynamic> toUpdateJson() {
@@ -90,7 +90,7 @@ class InventoryItem {
       itemName: map['nombre']?.toString() ?? '',
       quantity: int.tryParse(map['cantidad']?.toString() ?? '0') ?? 0,
       unit: map['unidad']?.toString() ?? 'unit',
-      apiaryId: 1, // Default apiary ID
+      apiaryId: map['apiary_id'] as int? ?? 0,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

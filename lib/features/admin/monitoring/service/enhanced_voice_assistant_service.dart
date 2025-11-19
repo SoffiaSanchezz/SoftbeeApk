@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:sotfbee/features/admin/monitoring/models/enhanced_models.dart';
 import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.dart';
-import 'package:sotfbee/features/admin/reports/model/api_models.dart' as reports_models;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -28,8 +27,8 @@ class EnhancedVoiceAssistantService {
       StreamController<String>.broadcast();
   StreamController<bool> listeningController =
       StreamController<bool>.broadcast();
-  StreamController<reports_models.Monitoreo> monitoringCompletedController =
-      StreamController<reports_models.Monitoreo>.broadcast();
+  StreamController<Monitoreo> monitoringCompletedController =
+      StreamController<Monitoreo>.broadcast();
 
   // Estados del flujo de monitoreo
   String currentMessage = '';
@@ -280,7 +279,7 @@ class EnhancedVoiceAssistantService {
         await _selectApiario();
       } else {
         await speak(
-          "Iniciando monitoreo para el apiario ${selectedApiario!.nombre}.",
+          "Iniciando monitoreo para el apiario ${selectedApiario!.name}.",
         );
         await _loadColmenas();
         await _selectColmena();
@@ -301,7 +300,7 @@ class EnhancedVoiceAssistantService {
       return;
     }
 
-    final apiarioNames = apiarios.map((a) => a.nombre).join(', ');
+    final apiarioNames = apiarios.map((a) => a.name).join(', ');
     final message =
         "Apiarios disponibles: $apiarioNames. ¿Cuál quieres monitorear?";
 
@@ -322,14 +321,14 @@ class EnhancedVoiceAssistantService {
     int bestScore = 0;
 
     for (var apiario in apiarios) {
-      final score = ratio(apiario.nombre.toLowerCase(), text.toLowerCase());
+      final score = ratio(apiario.name.toLowerCase(), text.toLowerCase());
       if (score > bestScore && score > 60) {
         bestScore = score;
         matchedApiario = apiario;
       }
 
       // También verificar si el texto contiene el nombre del apiario
-      if (text.toLowerCase().contains(apiario.nombre.toLowerCase())) {
+      if (text.toLowerCase().contains(apiario.name.toLowerCase())) {
         matchedApiario = apiario;
         break;
       }
@@ -337,15 +336,15 @@ class EnhancedVoiceAssistantService {
 
     if (matchedApiario != null) {
       selectedApiario = matchedApiario;
-      _updateStatus("Apiario seleccionado: ${matchedApiario.nombre}");
-      await speak("Perfecto, has seleccionado ${matchedApiario.nombre}.");
+      _updateStatus("Apiario seleccionado: ${matchedApiario.name}");
+      await speak("Perfecto, has seleccionado ${matchedApiario.name}.");
 
       // Cargar colmenas del apiario
       await _loadColmenas();
       await _selectColmena();
     } else {
       await speak(
-        "No reconocí ese apiario. Los disponibles son: ${apiarios.map((a) => a.nombre).join(', ')}. ¿Cuál eliges?",
+        "No reconocí ese apiario. Los disponibles son: ${apiarios.map((a) => a.name).join(', ')}. ¿Cuál eliges?",
       );
       final response = await listen(duration: 6);
       if (response.isNotEmpty) {
@@ -358,9 +357,11 @@ class EnhancedVoiceAssistantService {
     if (selectedApiario == null) return;
 
     try {
-      colmenas = (await dbService.getColmenasByApiario(selectedApiario!.id)).cast<Colmena>();
+      colmenas = (await dbService.getColmenasByApiario(
+        selectedApiario!.id,
+      )).cast<Colmena>();
       debugPrint(
-        "✅ Cargadas ${colmenas.length} colmenas para apiario ${selectedApiario!.nombre}",
+        "✅ Cargadas ${colmenas.length} colmenas para apiario ${selectedApiario!.name}",
       );
     } catch (e) {
       debugPrint("❌ Error al cargar colmenas: $e");
@@ -432,7 +433,9 @@ class EnhancedVoiceAssistantService {
 
   Future<void> _inspectNextColmena() async {
     if (_currentColmenaIndex >= colmenas.length) {
-      await speak("Se han inspeccionado todas las colmenas del apiario ${selectedApiario!.nombre}.");
+      await speak(
+        "Se han inspeccionado todas las colmenas del apiario ${selectedApiario!.name}.",
+      );
       _isInspectingAll = false;
       await stopAssistant();
       return;
@@ -441,7 +444,9 @@ class EnhancedVoiceAssistantService {
     final colmena = colmenas[_currentColmenaIndex];
     selectedColmena = colmena.numeroColmena;
     _updateStatus("Inspeccionando Colmena ${colmena.numeroColmena}");
-    await speak("Comenzando inspección de la colmena número ${colmena.numeroColmena}.");
+    await speak(
+      "Comenzando inspección de la colmena número ${colmena.numeroColmena}.",
+    );
 
     // Reset for new inspection
     respuestas.clear();
@@ -449,7 +454,9 @@ class EnhancedVoiceAssistantService {
 
     await _loadQuestions();
     if (preguntasActivas.isEmpty) {
-      await speak("No hay preguntas para esta colmena. Pasando a la siguiente.");
+      await speak(
+        "No hay preguntas para esta colmena. Pasando a la siguiente.",
+      );
       _currentColmenaIndex++;
       await _inspectNextColmena();
     } else {
@@ -646,20 +653,20 @@ class EnhancedVoiceAssistantService {
         await dbService.saveRespuestas(monitoreoId, respuestas);
 
         // Construir el objeto de reporte y emitirlo
-        final report = reports_models.Monitoreo(
+        final report = Monitoreo(
           monitoreoId: monitoreoId,
           colmenaId: selectedColmena!,
           apiarioId: selectedApiario!.id,
           fecha: DateTime.now(),
           respuestas: respuestas.map((r) {
-            return reports_models.RespuestaMonitoreo(
+            return RespuestaMonitoreo(
               preguntaId: r.preguntaId,
               preguntaTexto: r.preguntaTexto,
               respuesta: r.respuesta?.toString() ?? 'N/A',
               tipoRespuesta: r.tipoRespuesta ?? 'texto',
             );
           }).toList(),
-          apiarioNombre: selectedApiario!.nombre,
+          apiarioNombre: selectedApiario!.name,
           hiveNumber: selectedColmena.toString(),
           sincronizado: false,
         );
@@ -706,13 +713,17 @@ class EnhancedVoiceAssistantService {
                     .map((r) => Map<String, dynamic>.from(r))
                     .toList(),
               );
-              
+
               if (serverId > 0) {
                 await dbService.markMonitoreoSincronizado(monitoreoData['id']);
-                debugPrint("✅ Monitoreo ${monitoreoData['id']} sincronizado con éxito. Server ID: $serverId");
+                debugPrint(
+                  "✅ Monitoreo ${monitoreoData['id']} sincronizado con éxito. Server ID: $serverId",
+                );
               }
             } catch (e) {
-              debugPrint("❌ Error sincronizando monitoreo ${monitoreoData['id']}: $e");
+              debugPrint(
+                "❌ Error sincronizando monitoreo ${monitoreoData['id']}: $e",
+              );
             }
           }
         }
@@ -743,7 +754,9 @@ class EnhancedVoiceAssistantService {
     try {
       // Añadir verificación de inicialización
       if (!speech.isAvailable) {
-        debugPrint("⚠️ Speech recognition no estaba inicializado. Re-inicializando...");
+        debugPrint(
+          "⚠️ Speech recognition no estaba inicializado. Re-inicializando...",
+        );
         await _initializeSpeech();
         if (!speech.isAvailable) {
           _updateStatus("No se pudo inicializar el reconocimiento de voz.");
@@ -762,7 +775,10 @@ class EnhancedVoiceAssistantService {
       speech.listen(
         onResult: (result) {
           recognizedText = result.recognizedWords.toLowerCase().trim();
-          if (isDebugMode) debugPrint("🎤 Parcial: $recognizedText (Confianza: ${result.confidence.toStringAsFixed(2)})");
+          if (isDebugMode)
+            debugPrint(
+              "🎤 Parcial: $recognizedText (Confianza: ${result.confidence.toStringAsFixed(2)})",
+            );
           if (result.finalResult) {
             speechResultsController.add(recognizedText);
             debugPrint("👤 USUARIO: $recognizedText");

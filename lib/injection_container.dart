@@ -46,7 +46,7 @@
 //   sl.registerLazySingleton<InventoryRemoteDataSource>(
 //     () => InventoryRemoteDataSource(
 //       client: sl(),
-//       baseUrl: 'https://softbee-back-end.onrender.com/api', // URL de tu backend
+//       baseUrl: 'http://127.0.0.1:5000/api', // URL de tu backend
 //     ),
 //   );
 

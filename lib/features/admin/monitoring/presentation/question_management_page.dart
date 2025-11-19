@@ -355,7 +355,7 @@ class _QuestionsManagementScreenState extends State<QuestionsManagementScreen> {
                   return DropdownMenuItem<int>(
                     value: apiario.id,
                     child: Text(
-                      apiario.nombre,
+                      apiario.name,
                       style: GoogleFonts.poppins(fontSize: 12),
                     ),
                   );
@@ -802,20 +802,29 @@ class _QuestionsManagementScreenState extends State<QuestionsManagementScreen> {
                                 ),
                                 Text(
                                   'Activa',
-                                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                                 SizedBox(height: 8),
                                 Switch(
                                   value: pregunta.seleccionada,
                                   onChanged: (value) =>
-                                      _togglePreguntaSeleccionada(pregunta, value),
+                                      _togglePreguntaSeleccionada(
+                                        pregunta,
+                                        value,
+                                      ),
                                   activeColor: colorAmarilloOscuro,
                                   materialTapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 Text(
                                   'Seleccionada',
-                                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[600]),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                                 PopupMenuButton<String>(
                                   icon: Icon(
@@ -1005,7 +1014,10 @@ class _QuestionsManagementScreenState extends State<QuestionsManagementScreen> {
     }
   }
 
-  Future<void> _togglePreguntaSeleccionada(Pregunta pregunta, bool seleccionada) async {
+  Future<void> _togglePreguntaSeleccionada(
+    Pregunta pregunta,
+    bool seleccionada,
+  ) async {
     try {
       final updatedPregunta = pregunta.copyWith(seleccionada: seleccionada);
       await EnhancedApiService.actualizarPregunta(

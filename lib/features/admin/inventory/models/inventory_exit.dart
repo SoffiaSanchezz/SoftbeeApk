@@ -22,7 +22,8 @@ class InventoryExit {
       nombreInsumo: json['item_name']?.toString() ?? '',
       cantidad: json['quantity'] as int? ?? 0,
       persona: json['person']?.toString() ?? '',
-      fecha: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+      fecha:
+          DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 

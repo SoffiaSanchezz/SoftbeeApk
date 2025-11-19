@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:sotfbee/features/admin/monitoring/presentation/apiary-beehive-view-page.dart';
 import 'package:sotfbee/features/admin/monitoring/presentation/beehive_management_page.dart';
 import 'package:sotfbee/features/admin/monitoring/presentation/apiary_management_page.dart';
 import 'package:sotfbee/features/admin/monitoring/presentation/enhanced_monitoreo_page.dart';
@@ -12,7 +13,8 @@ import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_pa
 import '../models/enhanced_models.dart';
 
 class MainMonitoringScreen extends StatefulWidget {
-  const MainMonitoringScreen({Key? key}) : super(key: key);
+  final Apiario? apiario;
+  const MainMonitoringScreen({Key? key, this.apiario}) : super(key: key);
 
   @override
   _MainMonitoringScreenState createState() => _MainMonitoringScreenState();
@@ -73,9 +75,9 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         'monitoreos_pendientes': 3,
       };
       apiarios = [
-        Apiario(id: 1, nombre: "Apiario Norte", ubicacion: "Sector La Montaña"),
-        Apiario(id: 2, nombre: "Apiario Sur", ubicacion: "Valle del Río"),
-        Apiario(id: 3, nombre: "Apiario Central", ubicacion: "Finca El Roble"),
+        Apiario(id: 1, name: "Apiario Norte", location: "Sector La Montaña"),
+        Apiario(id: 2, name: "Apiario Sur", location: "Valle del Río"),
+        Apiario(id: 3, name: "Apiario Central", location: "Finca El Roble"),
       ];
       if (mounted) setState(() {});
     }
@@ -724,7 +726,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    apiario.nombre,
+                    apiario.name,
                     style: GoogleFonts.poppins(
                       fontSize: isDesktop ? 16 : 14,
                       fontWeight: FontWeight.bold,
@@ -732,7 +734,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
                     ),
                   ),
                   Text(
-                    apiario.ubicacion,
+                    apiario.location ?? '',
                     style: GoogleFonts.poppins(
                       fontSize: isDesktop ? 14 : 12,
                       color: Colors.black54,
@@ -922,7 +924,7 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
   void _navigateToColmenas() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ColmenasManagementScreen()),
+      MaterialPageRoute(builder: (context) => const ApiaryBeehiveViewPage()),
     ).then((_) => _loadData());
   }
 
@@ -1026,19 +1028,19 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          apiario.nombre,
+          apiario.name,
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('Ubicación:', apiario.ubicacion),
+            _buildDetailRow('Ubicación:', apiario.location ?? ''),
             _buildDetailRow('ID:', apiario.id.toString()),
-            if (apiario.fechaCreacion != null)
+            if (apiario.createdAt != null)
               _buildDetailRow(
                 'Fecha de creación:',
-                '${apiario.fechaCreacion!.day}/${apiario.fechaCreacion!.month}/${apiario.fechaCreacion!.year}',
+                '${apiario.createdAt!.day}/${apiario.createdAt!.month}/${apiario.createdAt!.year}',
               ),
           ],
         ),

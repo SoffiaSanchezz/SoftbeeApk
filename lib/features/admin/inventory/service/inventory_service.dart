@@ -1,18 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import '../models/inventory_item.dart';
-import 'api_config.dart';
+import 'package:sotfbee/features/admin/inventory/models/inventory_item.dart';
+import 'package:sotfbee/features/admin/inventory/service/api_config.dart';
+import 'package:sotfbee/features/auth/data/datasources/user_service.dart';
 
 class InventoryService {
   static final InventoryService _instance = InventoryService._internal();
   factory InventoryService() => _instance;
   InventoryService._internal();
 
+  Future<int> _getApiaryIdForCurrentUser() async {
+    final userProfile = await UserService.getCurrentUserProfile();
+    if (userProfile == null || userProfile.apiaries.isEmpty) {
+      throw Exception('No se encontró un apiario para el usuario actual.');
+    }
+    return userProfile.apiaries.first.id;
+  }
+
   // Obtener todos los items del inventario por apiario
   Future<List<InventoryItem>> getInventoryItems({int? apiaryId}) async {
     try {
-      final int targetApiaryId = apiaryId ?? ApiConfig.defaultApiaryId;
+      final int targetApiaryId = apiaryId ?? await _getApiaryIdForCurrentUser();
       final response = await http
           .get(
             Uri.parse(
@@ -40,9 +49,14 @@ class InventoryService {
   // Crear un nuevo item en un apiario
   Future<int> createInventoryItem(InventoryItem item) async {
     try {
+      final int targetApiaryId = item.apiaryId == 0
+          ? await _getApiaryIdForCurrentUser()
+          : item.apiaryId;
       final response = await http
           .post(
-            Uri.parse('${ApiConfig.baseUrl}/apiaries/${item.apiaryId}/inventory'),
+            Uri.parse(
+              '${ApiConfig.baseUrl}/apiaries/$targetApiaryId/inventory',
+            ),
             headers: await ApiConfig.getHeaders(),
             body: json.encode(item.toCreateJson()),
           )
@@ -133,7 +147,7 @@ class InventoryService {
     int? apiaryId,
   }) async {
     try {
-      final int targetApiaryId = apiaryId ?? ApiConfig.defaultApiaryId;
+      final int targetApiaryId = apiaryId ?? await _getApiaryIdForCurrentUser();
       final response = await http
           .get(
             Uri.parse(

@@ -4,10 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import '../models/enhanced_models.dart';
 import 'local_db_service.dart';
- import 'package:flutter/foundation.dart'; 
+import 'package:flutter/foundation.dart';
 
 class EnhancedApiService {
-  static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
+  static const String _baseUrl = 'http://127.0.0.1:5000/api';
   static const Duration _timeout = Duration(seconds: 30);
 
   static Future<Map<String, String>> get _headers async {
@@ -106,13 +106,13 @@ class EnhancedApiService {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         final apiarios = data.map((json) => Apiario.fromJson(json)).toList();
-        
+
         // Guardar en la base de datos local
         final dbService = LocalDBService();
         for (final apiario in apiarios) {
           await dbService.insertApiario(apiario);
         }
-        
+
         return apiarios;
       } else if (response.statusCode == 404) {
         return [];
@@ -224,13 +224,13 @@ class EnhancedApiService {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         final colmenas = data.map((json) => Colmena.fromJson(json)).toList();
-        
+
         // Guardar en la base de datos local
         final dbService = LocalDBService();
         for (final colmena in colmenas) {
           await dbService.insertColmena(colmena);
         }
-        
+
         return colmenas;
       }
       throw Exception('Error al obtener colmenas: ${response.statusCode}');
@@ -320,12 +320,12 @@ class EnhancedApiService {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         final preguntas = data.map((json) => Pregunta.fromJson(json)).toList();
-        
+
         // Guardar en la base de datos local
         for (final pregunta in preguntas) {
           await dbService.savePregunta(pregunta);
         }
-        
+
         return preguntas;
       } else {
         throw Exception(
@@ -334,7 +334,9 @@ class EnhancedApiService {
       }
     } catch (e) {
       // Si falla la obtención del servidor, intentar desde la base de datos local
-      debugPrint("⚠️ Error al obtener preguntas del servidor, intentando desde local: $e");
+      debugPrint(
+        "⚠️ Error al obtener preguntas del servidor, intentando desde local: $e",
+      );
       return await dbService.getPreguntasByApiario(apiarioId);
     }
   }
@@ -405,13 +407,16 @@ class EnhancedApiService {
 
       // Actualizar también en la base de datos local
       final dbService = LocalDBService();
-      final pregunta = Pregunta.fromJson(data..['id'] = preguntaId); // Reconstruir Pregunta con ID
+      final pregunta = Pregunta.fromJson(
+        data..['id'] = preguntaId,
+      ); // Reconstruir Pregunta con ID
       await dbService.savePregunta(pregunta);
-
     } catch (e) {
       // Si falla la actualización en el servidor, al menos guardar localmente
       final dbService = LocalDBService();
-      final pregunta = Pregunta.fromJson(data..['id'] = preguntaId); // Reconstruir Pregunta con ID
+      final pregunta = Pregunta.fromJson(
+        data..['id'] = preguntaId,
+      ); // Reconstruir Pregunta con ID
       await dbService.savePregunta(pregunta);
       throw Exception('Error de conexión al actualizar pregunta: $e');
     }
@@ -579,13 +584,14 @@ class EnhancedApiService {
         final result = json.decode(response.body);
         return result['id'];
       } else {
-        throw Exception('Error al crear monitoreo: ${response.statusCode} - ${response.body}');
+        throw Exception(
+          'Error al crear monitoreo: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       throw Exception('Error de conexión al crear monitoreo: $e');
     }
   }
-
 
   // ==================== UTILIDADES ====================
   static Future<bool> verificarConexion() async {

@@ -1,10 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiConfig {
-  static const String baseUrl =
-      'https://softbee-back-end.onrender.com/api';
-
-  static const int defaultApiaryId = 1;
+  static const String baseUrl = 'http://127.0.0.1:5000/api';
 
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 10);

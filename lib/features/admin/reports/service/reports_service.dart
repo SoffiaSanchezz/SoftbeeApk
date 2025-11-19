@@ -5,7 +5,7 @@ import 'package:sotfbee/features/admin/reports/model/api_models.dart';
 import 'package:sotfbee/features/auth/data/datasources/user_service.dart';
 
 class ReportsService {
-  static const String _baseUrl = 'https://softbee-back-end.onrender.com/api';
+  static const String _baseUrl = 'http://127.0.0.1:5000/api';
 
   static Future<Map<String, String>> get _headers async {
     final token = await AuthStorage.getToken();

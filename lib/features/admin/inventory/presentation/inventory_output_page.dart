@@ -8,7 +8,6 @@ import 'package:sotfbee/features/admin/inventory/service/inventory_service.dart'
 import 'package:sotfbee/features/admin/inventory/widgets/error_widget.dart';
 import 'package:sotfbee/features/admin/inventory/widgets/loading_widget.dart';
 
-
 // Enum para definir los tipos de pantalla
 enum ScreenType { mobile, tablet, desktop }
 
@@ -298,7 +297,7 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => LoadingWidget (message: 'Registrando salida...'),
+        builder: (context) => LoadingWidget(message: 'Registrando salida...'),
       );
 
       // Registrar la salida en el backend

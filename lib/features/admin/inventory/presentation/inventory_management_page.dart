@@ -6,6 +6,7 @@ import 'package:sotfbee/features/admin/inventory/service/inventory_service.dart'
 import 'package:sotfbee/features/admin/inventory/widgets/error_widget.dart';
 import 'package:sotfbee/features/admin/inventory/widgets/loading_widget.dart';
 
+import 'package:sotfbee/features/admin/monitoring/models/enhanced_models.dart';
 
 // Enum para definir los tipos de pantalla
 enum ScreenType { mobile, tablet, desktop }
@@ -58,6 +59,9 @@ class ResponsiveLayout extends StatelessWidget {
 }
 
 class GestionInventarioUpdated extends StatefulWidget {
+  final Apiario? apiario;
+  const GestionInventarioUpdated({Key? key, this.apiario}) : super(key: key);
+
   @override
   _GestionInventarioUpdatedState createState() =>
       _GestionInventarioUpdatedState();
@@ -130,7 +134,9 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
         _errorMessage = null;
       });
 
-      final items = await _inventoryService.getInventoryItems();
+      final items = await _inventoryService.getInventoryItems(
+        apiaryId: widget.apiario?.id,
+      );
 
       setState(() {
         _inventoryItems = items;
@@ -176,7 +182,7 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
           itemName: nombreController.text.trim(),
           quantity: int.parse(cantidadController.text),
           unit: unidadSeleccionada,
-          apiaryId: 1, // ID del apiario por defecto
+          apiaryId: widget.apiario?.id ?? 0, // ID del apiario por defecto
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );

@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sotfbee/features/admin/monitoring/models/enhanced_models.dart' as enhanced_models;
+import 'package:sotfbee/features/admin/monitoring/models/enhanced_models.dart'
+    as enhanced_models;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -13,7 +14,8 @@ class LocalDBService {
   static Box? _hiveBox;
 
   static const String _databaseName = 'beehive_monitoring.db';
-  static const int _databaseVersion = 4; // Incrementado para agregar tablas de monitoreo
+  static const int _databaseVersion =
+      4; // Incrementado para agregar tablas de monitoreo
   static const String _hiveBoxName = 'beehive_data';
 
   Future<Database?> get database async {
@@ -210,7 +212,7 @@ class LocalDBService {
           FOREIGN KEY (apiario_id) REFERENCES apiarios (id) ON DELETE CASCADE
         )
       ''');
-      
+
       await db.execute('''
         CREATE TABLE IF NOT EXISTS respuestas_monitoreo (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -248,12 +250,18 @@ class LocalDBService {
       final data = box.toMap();
       return data.entries
           .where((e) => e.key.toString().startsWith('apiario_'))
-          .map((e) => enhanced_models.Apiario.fromJson(Map<String, dynamic>.from(e.value)))
+          .map(
+            (e) => enhanced_models.Apiario.fromJson(
+              Map<String, dynamic>.from(e.value),
+            ),
+          )
           .toList();
     } else {
       final db = await database;
-      final List<Map<String, dynamic>> maps =
-          await db!.query('apiarios', orderBy: 'nombre ASC');
+      final List<Map<String, dynamic>> maps = await db!.query(
+        'apiarios',
+        orderBy: 'nombre ASC',
+      );
       return List.generate(maps.length, (i) {
         return enhanced_models.Apiario.fromJson(maps[i]);
       });
@@ -287,11 +295,7 @@ class LocalDBService {
       return 1;
     } else {
       final db = await database;
-      return await db!.delete(
-        'apiarios',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      return await db!.delete('apiarios', where: 'id = ?', whereArgs: [id]);
     }
   }
 
@@ -311,13 +315,19 @@ class LocalDBService {
     }
   }
 
-  Future<List<enhanced_models.Colmena>> getColmenasByApiario(int apiarioId) async {
+  Future<List<enhanced_models.Colmena>> getColmenasByApiario(
+    int apiarioId,
+  ) async {
     if (kIsWeb) {
       final box = await hiveBox;
       final data = box.toMap();
       return data.entries
           .where((e) => e.key.toString().startsWith('colmena_'))
-          .map((e) => enhanced_models.Colmena.fromJson(Map<String, dynamic>.from(e.value)))
+          .map(
+            (e) => enhanced_models.Colmena.fromJson(
+              Map<String, dynamic>.from(e.value),
+            ),
+          )
           .where((c) => c.idApiario == apiarioId && c.activa == true)
           .toList();
     } else {
@@ -335,13 +345,19 @@ class LocalDBService {
   }
 
   // ================ PREGUNTAS ================
-  Future<List<enhanced_models.Pregunta>> getPreguntasByApiario(int apiarioId) async {
+  Future<List<enhanced_models.Pregunta>> getPreguntasByApiario(
+    int apiarioId,
+  ) async {
     if (kIsWeb) {
       final box = await hiveBox;
       final data = box.toMap();
       return data.entries
           .where((e) => e.key.toString().startsWith('pregunta_'))
-          .map((e) => enhanced_models.Pregunta.fromJson(Map<String, dynamic>.from(e.value)))
+          .map(
+            (e) => enhanced_models.Pregunta.fromJson(
+              Map<String, dynamic>.from(e.value),
+            ),
+          )
           .where((p) => p.apiarioId == apiarioId)
           .toList();
     } else {
@@ -352,12 +368,12 @@ class LocalDBService {
         whereArgs: [apiarioId],
         orderBy: 'orden ASC',
       );
-      
+
       // Obtener opciones para cada pregunta
       final preguntas = List.generate(maps.length, (i) {
         return enhanced_models.Pregunta.fromJson(maps[i]);
       });
-      
+
       for (var pregunta in preguntas) {
         final opciones = await db.query(
           'opciones',
@@ -365,10 +381,12 @@ class LocalDBService {
           whereArgs: [pregunta.id],
         );
         if (opciones.isNotEmpty) {
-          pregunta.opciones = opciones.map((o) => enhanced_models.Opcion.fromJson(o)).toList();
+          pregunta.opciones = opciones
+              .map((o) => enhanced_models.Opcion.fromJson(o))
+              .toList();
         }
       }
-      
+
       return preguntas;
     }
   }
@@ -380,22 +398,18 @@ class LocalDBService {
       return 1;
     } else {
       final db = await database;
-      await db!.insert(
-        'preguntas',
-        {
-          'id': pregunta.id,
-          'texto': pregunta.texto,
-          'tipo_respuesta': pregunta.tipoRespuesta,
-          'seleccionada': pregunta.seleccionada ? 1 : 0, // Guardar como entero
-          'orden': pregunta.orden,
-          'activa': pregunta.activa ? 1 : 0,
-          'obligatoria': pregunta.obligatoria ? 1 : 0,
-          'apiario_id': pregunta.apiarioId,
-          'fecha_creacion': pregunta.fechaCreacion?.toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      
+      await db!.insert('preguntas', {
+        'id': pregunta.id,
+        'texto': pregunta.texto,
+        'tipo_respuesta': pregunta.tipoRespuesta,
+        'seleccionada': pregunta.seleccionada ? 1 : 0, // Guardar como entero
+        'orden': pregunta.orden,
+        'activa': pregunta.activa ? 1 : 0,
+        'obligatoria': pregunta.obligatoria ? 1 : 0,
+        'apiario_id': pregunta.apiarioId,
+        'fecha_creacion': pregunta.fechaCreacion?.toIso8601String(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
       // Guardar opciones si existen
       if (pregunta.opciones != null && pregunta.opciones!.isNotEmpty) {
         // Eliminar opciones antiguas primero
@@ -404,7 +418,7 @@ class LocalDBService {
           where: 'pregunta_id = ?',
           whereArgs: [pregunta.id],
         );
-        
+
         // Insertar nuevas opciones
         for (var opcion in pregunta.opciones!) {
           await db.insert('opciones', {
@@ -426,29 +440,26 @@ class LocalDBService {
     } else {
       final db = await database;
       // Eliminar opciones primero por la relación foreign key
-      await db!.delete(
-        'opciones',
-        where: 'pregunta_id = ?',
-        whereArgs: [id],
-      );
-      
+      await db!.delete('opciones', where: 'pregunta_id = ?', whereArgs: [id]);
+
       // Luego eliminar la pregunta
-      return await db.delete(
-        'preguntas',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      return await db.delete('preguntas', where: 'id = ?', whereArgs: [id]);
     }
   }
 
   // ================ NOTIFICACIONES REINA ================
-  Future<List<enhanced_models.NotificacionReina>> getNotificacionesReina() async {
+  Future<List<enhanced_models.NotificacionReina>>
+  getNotificacionesReina() async {
     if (kIsWeb) {
       final box = await hiveBox;
       final data = box.toMap();
       return data.entries
           .where((e) => e.key.toString().startsWith('notificacion_'))
-          .map((e) => enhanced_models.NotificacionReina.fromJson(Map<String, dynamic>.from(e.value)))
+          .map(
+            (e) => enhanced_models.NotificacionReina.fromJson(
+              Map<String, dynamic>.from(e.value),
+            ),
+          )
           .toList();
     } else {
       final db = await database;
@@ -462,7 +473,9 @@ class LocalDBService {
     }
   }
 
-  Future<int> saveNotificacionReina(enhanced_models.NotificacionReina notificacion) async {
+  Future<int> saveNotificacionReina(
+    enhanced_models.NotificacionReina notificacion,
+  ) async {
     if (kIsWeb) {
       final box = await hiveBox;
       await box.put('notificacion_${notificacion.id}', notificacion.toJson());
@@ -510,11 +523,16 @@ class LocalDBService {
     }
   }
 
-  Future<int> saveRespuestas(int monitoreoId, List<enhanced_models.MonitoreoRespuesta> respuestas) async {
+  Future<int> saveRespuestas(
+    int monitoreoId,
+    List<enhanced_models.MonitoreoRespuesta> respuestas,
+  ) async {
     if (kIsWeb) {
       final box = await hiveBox;
-      await box.put('respuestas_$monitoreoId', 
-        respuestas.map((r) => r.toJson()).toList());
+      await box.put(
+        'respuestas_$monitoreoId',
+        respuestas.map((r) => r.toJson()).toList(),
+      );
       return respuestas.length;
     } else {
       final db = await database;
@@ -526,7 +544,9 @@ class LocalDBService {
           'pregunta_texto': respuesta.preguntaTexto,
           'respuesta': respuesta.respuesta.toString(),
           'tipo_respuesta': respuesta.tipoRespuesta ?? 'texto',
-          'fecha_respuesta': respuesta.fechaRespuesta?.toIso8601String() ?? DateTime.now().toIso8601String(),
+          'fecha_respuesta':
+              respuesta.fechaRespuesta?.toIso8601String() ??
+              DateTime.now().toIso8601String(),
         });
         count++;
       }
@@ -591,26 +611,44 @@ class LocalDBService {
     if (kIsWeb) {
       final box = await hiveBox;
       return {
-        'total_apiarios': box.keys.where((k) => k.toString().startsWith('apiario_')).length,
-        'total_colmenas': box.keys.where((k) => k.toString().startsWith('colmena_')).length,
-        'total_monitoreos': box.keys.where((k) => k.toString().startsWith('monitoreo_')).length,
-        'monitoreos_pendientes': box.keys.where((k) => k.toString().startsWith('monitoreo_')).length,
+        'total_apiarios': box.keys
+            .where((k) => k.toString().startsWith('apiario_'))
+            .length,
+        'total_colmenas': box.keys
+            .where((k) => k.toString().startsWith('colmena_'))
+            .length,
+        'total_monitoreos': box.keys
+            .where((k) => k.toString().startsWith('monitoreo_'))
+            .length,
+        'monitoreos_pendientes': box.keys
+            .where((k) => k.toString().startsWith('monitoreo_'))
+            .length,
       };
     } else {
       final db = await database;
-      final apiariosCount = Sqflite.firstIntValue(
-        await db!.rawQuery('SELECT COUNT(*) FROM apiarios'),
-      ) ?? 0;
-      final colmenasCount = Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM colmenas WHERE activa = 1'),
-      ) ?? 0;
-      final monitoreosCount = Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM monitoreos'),
-      ) ?? 0;
-      final pendientesCount = Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM monitoreos WHERE sincronizado = 0'),
-      ) ?? 0;
-      
+      final apiariosCount =
+          Sqflite.firstIntValue(
+            await db!.rawQuery('SELECT COUNT(*) FROM apiarios'),
+          ) ??
+          0;
+      final colmenasCount =
+          Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM colmenas WHERE activa = 1'),
+          ) ??
+          0;
+      final monitoreosCount =
+          Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM monitoreos'),
+          ) ??
+          0;
+      final pendientesCount =
+          Sqflite.firstIntValue(
+            await db.rawQuery(
+              'SELECT COUNT(*) FROM monitoreos WHERE sincronizado = 0',
+            ),
+          ) ??
+          0;
+
       return {
         'total_apiarios': apiariosCount,
         'total_colmenas': colmenasCount,
