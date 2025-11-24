@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:sotfbee/features/auth/data/datasources/auth_service.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 
 class RegisterPage extends StatefulWidget {

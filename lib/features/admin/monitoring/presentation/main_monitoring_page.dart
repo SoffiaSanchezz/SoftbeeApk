@@ -10,7 +10,12 @@ import 'package:sotfbee/features/admin/monitoring/presentation/queen_calendar_pa
 import 'package:sotfbee/features/admin/monitoring/presentation/question_management_page.dart';
 import 'package:sotfbee/features/admin/monitoring/service/enhaced_api_service.dart';
 import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
+import 'package:sotfbee/features/admin/treatments/presentation/treatments_history_page.dart';
+import 'package:sotfbee/features/admin/inventory/presentation/inventory_management_page.dart';
+import 'package:sotfbee/features/admin/inventory/service/inventory_service.dart';
+import 'package:sotfbee/features/admin/inventory/models/inventory_item.dart'; // Nuevo import
 import '../models/enhanced_models.dart';
+import 'package:sotfbee/features/admin/settings/treatment_settings_page.dart';
 
 class MainMonitoringScreen extends StatefulWidget {
   final Apiario? apiario;
@@ -26,6 +31,10 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
   bool isConnected = false;
   Map<String, dynamic> estadisticas = {};
   List<Apiario> apiarios = [];
+  Map<String, dynamic> _inventorySummary = {}; // Nuevo
+  List<InventoryItem> _lowStockItems = []; // Nuevo
+  final InventoryService _inventoryService = InventoryService(); // Nuevo
+
 
   @override
   void initState() {
@@ -55,11 +64,15 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         final results = await Future.wait([
           EnhancedApiService.obtenerEstadisticas(),
           EnhancedApiService.obtenerApiarios(userId: user.id),
+          _inventoryService.getInventorySummary(), // Nuevo
+          _inventoryService.getLowStockItems(), // Nuevo
         ]);
         if (mounted) {
           setState(() {
             estadisticas = results[0] as Map<String, dynamic>;
             apiarios = results[1] as List<Apiario>;
+            _inventorySummary = results[2] as Map<String, dynamic>; // Nuevo
+            _lowStockItems = results[3] as List<InventoryItem>; // Nuevo
           });
         }
       } else {
@@ -79,6 +92,13 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         Apiario(id: 2, name: "Apiario Sur", location: "Valle del Río"),
         Apiario(id: 3, name: "Apiario Central", location: "Finca El Roble"),
       ];
+      _inventorySummary = { // Fallback para inventario
+        'total_items': 0,
+        'low_stock_items': 0,
+        'total_quantity': 0,
+        'in_stock_items': 0,
+      };
+      _lowStockItems = []; // Fallback para low stock
       if (mounted) setState(() {});
     }
   }
@@ -252,6 +272,11 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
                       .animate()
                       .fadeIn(delay: 600.ms, duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
+                  SizedBox(height: isDesktop ? 32 : 20), // Nuevo
+                  _buildInventorySummaryCard(isDesktop, isTablet) // Nuevo
+                      .animate()
+                      .fadeIn(delay: 800.ms, duration: 600.ms)
+                      .slideY(begin: 0.2, end: 0), // Nuevo
                 ],
               ),
             ),
@@ -831,10 +856,17 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         isDesktop: isDesktop,
       ),
       _buildActionButton(
-        icon: Icons.history_outlined,
-        label: 'Historial',
-        onPressed: () => _showHistory(),
-        color: Colors.green[700]!,
+        icon: Icons.healing_outlined,
+        label: 'Tratamientos',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TreatmentsHistoryPage(),
+            ),
+          );
+        },
+        color: Colors.red[400]!,
         width: buttonWidth,
         isDesktop: isDesktop,
       ),
@@ -983,6 +1015,22 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: Icon(Icons.healing, color: Colors.red[400]),
+              title: Text(
+                "Configuración de Tratamientos",
+                style: GoogleFonts.poppins(),
+              ),
+              onTap: () {
+                Navigator.pop(context); // Cierra el diálogo
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TreatmentSettingsPage(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: Icon(Icons.sync, color: Colors.amber[600]),
               title: Text(
@@ -1157,6 +1205,228 @@ class _MainMonitoringScreenState extends State<MainMonitoringScreen>
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  Widget _buildInventorySummaryCard(bool isDesktop, bool isTablet) {
+    final int totalItems = _inventorySummary['total_items'] ?? 0;
+    final int lowStockItems = _inventorySummary['low_stock_items'] ?? 0;
+    final int outOfStockItems =
+        (_inventorySummary['total_items'] ?? 0) -
+            (_inventorySummary['in_stock_items'] ?? 0) -
+            (_inventorySummary['low_stock_items'] ?? 0);
+
+    return Column(
+      children: [
+        _buildSectionTitle(
+          'Resumen de Inventario',
+          Icons.inventory_2_outlined,
+          isDesktop,
+        ),
+        SizedBox(height: isDesktop ? 16 : 12),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isDesktop ? 24 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(color: Colors.amber[200]!, width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Estado General del Inventario',
+                style: GoogleFonts.poppins(
+                  fontSize: isDesktop ? 20 : 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: isDesktop ? 20 : 16),
+              if (isDesktop)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildInventoryStatItem(
+                      icon: Icons.label_important_outline,
+                      label: 'Total de Items',
+                      value: totalItems.toString(),
+                      color: Colors.blue[600]!,
+                      isDesktop: isDesktop,
+                    ),
+                    _buildInventoryStatItem(
+                      icon: Icons.warning_amber_outlined,
+                      label: 'Stock Bajo',
+                      value: lowStockItems.toString(),
+                      color: Colors.orange[600]!,
+                      isDesktop: isDesktop,
+                    ),
+                    _buildInventoryStatItem(
+                      icon: Icons.error_outline,
+                      label: 'Sin Stock',
+                      value: outOfStockItems.toString(),
+                      color: Colors.red[600]!,
+                      isDesktop: isDesktop,
+                    ),
+                  ],
+                )
+              else
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  alignment: WrapAlignment.spaceAround,
+                  children: [
+                    _buildInventoryStatItem(
+                      icon: Icons.label_important_outline,
+                      label: 'Total Items',
+                      value: totalItems.toString(),
+                      color: Colors.blue[600]!,
+                      isDesktop: isDesktop,
+                    ),
+                    _buildInventoryStatItem(
+                      icon: Icons.warning_amber_outlined,
+                      label: 'Stock Bajo',
+                      value: lowStockItems.toString(),
+                      color: Colors.orange[600]!,
+                      isDesktop: isDesktop,
+                    ),
+                    _buildInventoryStatItem(
+                      icon: Icons.error_outline,
+                      label: 'Sin Stock',
+                      value: outOfStockItems.toString(),
+                      color: Colors.red[600]!,
+                      isDesktop: isDesktop,
+                    ),
+                  ],
+                ),
+              if (_lowStockItems.isNotEmpty) ...[
+                SizedBox(height: isDesktop ? 24 : 20),
+                Divider(color: Colors.grey[200], thickness: 1),
+                SizedBox(height: isDesktop ? 24 : 20),
+                Text(
+                  'Items con Stock Bajo:',
+                  style: GoogleFonts.poppins(
+                    fontSize: isDesktop ? 18 : 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange[800],
+                  ),
+                ),
+                SizedBox(height: isDesktop ? 16 : 12),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _lowStockItems.length,
+                  itemBuilder: (context, index) {
+                    final item = _lowStockItems[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.inventory_2,
+                              color: Colors.orange[500], size: 20),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '${item.itemName}: ${item.quantity} ${item.unit}',
+                              style: GoogleFonts.poppins(
+                                fontSize: isDesktop ? 16 : 14,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.arrow_forward_ios,
+                              size: 16, color: Colors.grey[400]),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+              SizedBox(height: isDesktop ? 24 : 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GestionInventarioUpdated()),
+                    );
+                  },
+                  icon: Icon(Icons.settings, size: isDesktop ? 20 : 18),
+                  label: Text(
+                    'Gestionar Inventario',
+                    style: GoogleFonts.poppins(
+                      fontSize: isDesktop ? 16 : 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber[600],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      vertical: isDesktop ? 16 : 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInventoryStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDesktop,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 16 : 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: isDesktop ? 24 : 20, color: color),
+          SizedBox(height: isDesktop ? 8 : 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: isDesktop ? 14 : 12,
+              color: Colors.black54,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: isDesktop ? 20 : 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

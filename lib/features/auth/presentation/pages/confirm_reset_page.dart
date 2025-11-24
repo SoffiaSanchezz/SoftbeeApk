@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:sotfbee/features/auth/data/datasources/auth_service.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final String token;

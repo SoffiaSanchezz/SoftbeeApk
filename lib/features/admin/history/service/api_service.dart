@@ -2,13 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sotfbee/features/admin/history/models/monitoreo_models.dart';
 import 'package:sotfbee/features/admin/history/service/local_storage_service.dart';
+import 'package:sotfbee/core/config/api_config.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart'; // Add this import
 
 class ApiService {
-  static const String baseUrl =
-      'https://softbee-back-end.onrender.com/api'; // Reemplaza con tu URL de Apiary
-  static const String flaskBaseUrl =
-      'https://softbee-back-end.onrender.com/api'; // URL de tu backend Flask
+  static final String baseUrl = ApiConfig.baseUrl;
 
   final LocalStorageService _localStorage = LocalStorageService();
 

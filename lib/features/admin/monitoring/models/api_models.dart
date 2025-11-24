@@ -24,12 +24,14 @@ class Apiario {
 
   factory Apiario.fromJson(Map<String, dynamic> json) {
     return Apiario(
-      id: json['id'],
-      userId: json['user_id'],
-      name: json['name'],
-      location: json['location'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      id: json['id'] as int? ?? 0,
+      userId: json['user_id'] as int? ?? 0,
+      name: json['name']?.toString() ?? '',
+      location: json['location']?.toString(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -67,15 +69,15 @@ class Colmena {
 
   factory Colmena.fromJson(Map<String, dynamic> json) {
     return Colmena(
-      id: json['id'],
-      apiarioId: json['apiario_id'],
-      numeroColmena: json['numero_colmena'],
-      estado: json['estado'],
+      id: json['id'] as int? ?? 0,
+      apiarioId: json['apiario_id'] as int? ?? 0,
+      numeroColmena: json['numero_colmena']?.toString() ?? '',
+      estado: json['estado']?.toString(),
       ultimaInspeccion: json['ultima_inspeccion'] != null
-          ? DateTime.parse(json['ultima_inspeccion'])
+          ? DateTime.tryParse(json['ultima_inspeccion'].toString())
           : null,
-      productividad: json['productividad']?.toDouble(),
-      notas: json['notas'],
+      productividad: (json['productividad'] as num?)?.toDouble(),
+      notas: json['notas']?.toString(),
     );
   }
 }
@@ -113,15 +115,16 @@ class Monitoreo {
     }
 
     return Monitoreo(
-      id: json['id'],
-      idColmena: json['id_colmena'],
-      idApiario: json['id_apiario'],
-      fecha: DateTime.parse(json['fecha']),
+      id: json['id'] as int? ?? 0,
+      idColmena: json['id_colmena'] as int? ?? 0,
+      idApiario: json['id_apiario'] as int? ?? 0,
+      fecha:
+          DateTime.tryParse(json['fecha']?.toString() ?? '') ?? DateTime.now(),
       respuestas: respuestas,
       datosAdicionales: json['datos_adicionales'],
       sincronizado: json['sincronizado'] == 1,
-      apiarioNombre: json['apiario_nombre'],
-      numeroColmena: json['numero_colmena'],
+      apiarioNombre: json['apiario_nombre']?.toString(),
+      numeroColmena: json['numero_colmena']?.toString(),
     );
   }
 }
@@ -146,12 +149,12 @@ class RespuestaMonitoreo {
 
   factory RespuestaMonitoreo.fromJson(Map<String, dynamic> json) {
     return RespuestaMonitoreo(
-      id: json['id'],
-      monitoreoId: json['monitoreo_id'],
-      preguntaId: json['pregunta_id'],
-      preguntaTexto: json['pregunta_texto'],
-      respuesta: json['respuesta'],
-      tipoRespuesta: json['tipo_respuesta'],
+      id: json['id'] as int? ?? 0,
+      monitoreoId: json['monitoreo_id'] as int?,
+      preguntaId: json['pregunta_id']?.toString() ?? '',
+      preguntaTexto: json['pregunta_texto']?.toString() ?? '',
+      respuesta: json['respuesta']?.toString(),
+      tipoRespuesta: json['tipo_respuesta']?.toString() ?? '',
     );
   }
 }
@@ -185,12 +188,12 @@ class Usuario {
     }
 
     return Usuario(
-      id: json['id'],
-      nombre: json['nombre'],
-      username: json['username'],
-      email: json['email'],
-      phone: json['phone'],
-      profilePicture: json['profile_picture'],
+      id: json['id'] as int? ?? 0,
+      nombre: json['nombre']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      profilePicture: json['profile_picture']?.toString(),
       apiarios: apiarios,
     );
   }
@@ -216,14 +219,15 @@ class SystemStats {
 
   factory SystemStats.fromJson(Map<String, dynamic> json) {
     return SystemStats(
-      totalApiarios: json['total_apiarios'],
-      totalColmenas: json['total_colmenas'],
-      totalMonitoreos: json['total_monitoreos'],
-      monitoreosUltimoMes: json['monitoreos_ultimo_mes'],
-      monitoreosPorApiario: (json['monitoreos_por_apiario'] as List)
+      totalApiarios: json['total_apiarios'] as int? ?? 0,
+      totalColmenas: json['total_colmenas'] as int? ?? 0,
+      totalMonitoreos: json['total_monitoreos'] as int? ?? 0,
+      monitoreosUltimoMes: json['monitoreos_ultimo_mes'] as int? ?? 0,
+      monitoreosPorApiario: (json['monitoreos_por_apiario'] as List? ?? [])
           .map((m) => MonitoreosPorApiario.fromJson(m))
           .toList(),
-      timestamp: DateTime.parse(json['timestamp']),
+      timestamp:
+          DateTime.tryParse(json['timestamp']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }
@@ -235,6 +239,9 @@ class MonitoreosPorApiario {
   MonitoreosPorApiario({required this.apiario, required this.total});
 
   factory MonitoreosPorApiario.fromJson(Map<String, dynamic> json) {
-    return MonitoreosPorApiario(apiario: json['apiario'], total: json['total']);
+    return MonitoreosPorApiario(
+      apiario: json['apiario']?.toString() ?? '',
+      total: json['total'] as int? ?? 0,
+    );
   }
 }

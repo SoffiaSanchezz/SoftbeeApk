@@ -1,16 +1,25 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:sotfbee/core/config/api_config.dart';
+import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/admin/reports/model/api_models.dart';
 
 class ApiService {
-  static const String baseUrl =
-      'https://softbee-back-end-1.onrender.com/api'; // Cambia por tu URL del backend
+  static final String baseUrl = ApiConfig.baseUrl;
 
-  // Headers comunes
-  static Map<String, String> get headers => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
+  // Headers para endpoints públicos (si los hay)
+  static Map<String, String> get publicHeaders => {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+  // Headers para endpoints autenticados
+  static Future<Map<String, String>> get _headers async {
+    final token = await AuthStorage.getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   // Manejo de errores
   static void _handleError(http.Response response) {
@@ -27,7 +36,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/monitoreos'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -44,7 +53,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/apiarios/$apiarioId/monitoreos'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -61,7 +70,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/colmenas/$colmenaId/monitoreos'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -92,7 +101,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/monitoreos'),
-        headers: headers,
+        headers: await _headers,
         body: json.encode(body),
       );
 
@@ -110,7 +119,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/monitoreos/$monitoreoId'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -127,7 +136,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/stats'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -146,7 +155,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/apiaries'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -163,7 +172,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/users/$userId/apiaries'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -180,7 +189,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/apiaries/$apiarioId'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -203,7 +212,7 @@ class ApiService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/apiaries'),
-        headers: headers,
+        headers: await _headers,
         body: json.encode(body),
       );
 
@@ -223,7 +232,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/users'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -240,7 +249,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/users/$userId'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -259,7 +268,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/health'),
-        headers: headers,
+        headers: publicHeaders,
       );
 
       _handleError(response);
@@ -277,7 +286,7 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/monitoreo/iniciar'),
-        headers: headers,
+        headers: await _headers,
       );
 
       _handleError(response);
@@ -288,3 +297,4 @@ class ApiService {
     }
   }
 }
+

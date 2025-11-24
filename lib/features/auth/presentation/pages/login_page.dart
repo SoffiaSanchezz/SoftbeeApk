@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sotfbee/core/widgets/dashboard_menu.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
-import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:sotfbee/features/auth/data/datasources/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

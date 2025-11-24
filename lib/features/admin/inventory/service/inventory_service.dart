@@ -210,4 +210,55 @@ class InventoryService {
       throw Exception('Error al registrar salida: $e');
     }
   }
+
+  // Obtener resumen del inventario
+  Future<Map<String, dynamic>> getInventorySummary({int? apiaryId}) async {
+    try {
+      final int targetApiaryId = apiaryId ?? await _getApiaryIdForCurrentUser();
+      final response = await http
+          .get(
+            Uri.parse(
+              '${ApiConfig.baseUrl}/apiaries/$targetApiaryId/inventory/summary',
+            ),
+            headers: await ApiConfig.getHeaders(),
+          )
+          .timeout(ApiConfig.connectTimeout);
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Error al obtener resumen: ${response.statusCode}');
+      }
+    } on SocketException {
+      throw Exception('Error de conexión. Verifica tu conexión a internet.');
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
+    }
+  }
+
+  // Obtener items con stock bajo
+  Future<List<InventoryItem>> getLowStockItems({int? apiaryId}) async {
+    try {
+      final int targetApiaryId = apiaryId ?? await _getApiaryIdForCurrentUser();
+      final response = await http
+          .get(
+            Uri.parse(
+              '${ApiConfig.baseUrl}/apiaries/$targetApiaryId/inventory/low-stock',
+            ),
+            headers: await ApiConfig.getHeaders(),
+          )
+          .timeout(ApiConfig.connectTimeout);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        return jsonList.map((json) => InventoryItem.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al obtener stock bajo: ${response.statusCode}');
+      }
+    } on SocketException {
+      throw Exception('Error de conexión. Verifica tu conexión a internet.');
+    } catch (e) {
+      throw Exception('Error inesperado: $e');
+    }
+  }
 }

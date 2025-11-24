@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:sotfbee/core/config/api_config.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import '../models/enhanced_models.dart';
 import 'local_db_service.dart';
 import 'package:flutter/foundation.dart';
 
 class EnhancedApiService {
-  static const String _baseUrl = 'http://127.0.0.1:5000/api';
-  static const Duration _timeout = Duration(seconds: 30);
+  static final String _baseUrl = ApiConfig.baseUrl;
+  static final Duration _timeout = ApiConfig.timeout;
 
   static Future<Map<String, String>> get _headers async {
     final token = await AuthStorage.getToken();

@@ -70,6 +70,8 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
 
   // Lista de insumos desde el backend
   List<InventoryItem> _inventoryItems = [];
+  Map<String, dynamic> _inventorySummary = {}; // Nuevo
+  List<InventoryItem> _lowStockItems = []; // Nuevo
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -116,9 +118,13 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
       });
 
       final items = await _inventoryService.getInventoryItems();
+      final summary = await _inventoryService.getInventorySummary();
+      final lowStock = await _inventoryService.getLowStockItems();
 
       setState(() {
         _inventoryItems = items;
+        _inventorySummary = summary;
+        _lowStockItems = lowStock;
         _isLoading = false;
       });
     } catch (e) {
@@ -795,7 +801,7 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
             SizedBox(height: 20),
             _buildSummaryCard(
               'Total de Insumos',
-              '${_inventoryItems.length}',
+              '${_inventorySummary['total_items'] ?? 0}',
               Icons.inventory_2,
               Colors.blue,
             ),
@@ -816,7 +822,7 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
             SizedBox(height: 12),
             _buildSummaryCard(
               'Stock Total',
-              '${_getStockTotal()}',
+              '${_inventorySummary['total_quantity'] ?? 0}',
               Icons.assessment,
               Colors.green,
             ),
@@ -856,7 +862,7 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
             SizedBox(height: 20),
             _buildStatItem(
               'Items disponibles',
-              '${_inventoryItems.where((item) => item.quantity > 0).length}',
+              '${_inventorySummary['in_stock_items'] ?? 0}',
             ),
             SizedBox(height: 16),
             _buildStatItem(
@@ -864,7 +870,8 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
               '${_getPromedioStock().toStringAsFixed(1)} unidades',
             ),
             SizedBox(height: 16),
-            _buildStatItem('Última actualización', 'Hace unos momentos'),
+            _buildStatItem('Última actualización',
+                '${_inventorySummary['updated_at'] != null ? 'Hace unos momentos' : 'N/A'}'),
             SizedBox(height: 24),
             Text(
               'Alertas',
@@ -1336,13 +1343,17 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
   List<Widget> _buildAlertas() {
     List<Widget> alertas = [];
 
-    if (_getSinStock() > 0) {
-      alertas.add(_buildAlerta('Productos sin stock', Icons.error, Colors.red));
+    final sinStockCount = _getSinStock();
+    if (sinStockCount > 0) {
+      alertas.add(_buildAlerta(
+          '$sinStockCount productos sin stock', Icons.error, Colors.red));
     }
 
-    if (_getStockBajo() > 0) {
+    if (_lowStockItems.isNotEmpty) {
+      final lowStockCount = _lowStockItems.length;
       alertas.add(
-        _buildAlerta('Stock bajo detectado', Icons.warning, Colors.orange),
+        _buildAlerta(
+            '$lowStockCount productos con stock bajo', Icons.warning, Colors.orange),
       );
     }
 
@@ -1385,28 +1396,16 @@ class _SalidaProductosUpdatedState extends State<SalidaProductosUpdated>
 
   // Métodos auxiliares para estadísticas
   int _getStockBajo() {
-    return _inventoryItems.where((insumo) {
-      final cantidad = insumo.quantity;
-      return cantidad > 0 && cantidad <= 1;
-    }).length;
+    return _inventorySummary['low_stock_items'] ?? 0;
   }
 
   int _getSinStock() {
-    return _inventoryItems.where((insumo) {
-      final cantidad = insumo.quantity;
-      return cantidad <= 0;
-    }).length;
+    // Utiliza el nuevo campo 'out_of_stock_items' que viene del backend.
+    return (_inventorySummary['out_of_stock_items'] as num?)?.toInt() ?? 0;
   }
 
-  int _getStockTotal() {
-    return _inventoryItems.fold(0, (total, insumo) {
-      return total + insumo.quantity;
-    });
-  }
-
-  double _getPromedioStock() {
-    if (_inventoryItems.isEmpty) return 0.0;
-    final total = _getStockTotal();
-    return total / _inventoryItems.length;
+  int _getSinStockCount() {
+    // Redirige al método corregido para mantener consistencia.
+    return _getSinStock();
   }
 }

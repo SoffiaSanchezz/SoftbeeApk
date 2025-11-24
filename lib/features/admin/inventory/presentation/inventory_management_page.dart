@@ -74,6 +74,8 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
 
   // Lista de insumos desde el backend
   List<InventoryItem> _inventoryItems = [];
+  Map<String, dynamic> _inventorySummary = {}; // Nuevo
+  List<InventoryItem> _lowStockItems = []; // Nuevo
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -88,10 +90,13 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
   // Variables de estado
   bool isEditing = false;
   InventoryItem? editingItem;
-  String unidadSeleccionada = 'unit';
+  String unidadSeleccionada = 'unidades';
 
   // Lista de unidades disponibles
   final List<String> unidades = [
+    'unidades',
+    'láminas',
+    'pares',
     'unit',
     'pair',
     'kg',
@@ -101,7 +106,7 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
     'gram',
     'ml',
     'dozen',
-  ];
+  ].toSet().toList();
 
   // Controlador de animación
   late AnimationController _animationController;
@@ -137,9 +142,17 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
       final items = await _inventoryService.getInventoryItems(
         apiaryId: widget.apiario?.id,
       );
+      final summary = await _inventoryService.getInventorySummary(
+        apiaryId: widget.apiario?.id,
+      );
+      final lowStock = await _inventoryService.getLowStockItems(
+        apiaryId: widget.apiario?.id,
+      );
 
       setState(() {
         _inventoryItems = items;
+        _inventorySummary = summary;
+        _lowStockItems = lowStock;
         _isLoading = false;
       });
     } catch (e) {
@@ -901,28 +914,28 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
             SizedBox(height: 20),
             _buildSummaryCard(
               'Total de Insumos',
-              '${_inventoryItems.length}',
+              '${_inventorySummary['total_items'] ?? 0}',
               Icons.inventory_2,
               Colors.blue,
             ),
             SizedBox(height: 12),
             _buildSummaryCard(
               'Stock Bajo',
-              '${_getStockBajo()}',
+              '${_inventorySummary['low_stock_items'] ?? 0}',
               Icons.warning,
               Colors.orange,
             ),
             SizedBox(height: 12),
             _buildSummaryCard(
               'Sin Stock',
-              '${_getSinStock()}',
+              '${_getSinStockCount()}', // Use a helper for out of stock count
               Icons.error,
               Colors.red,
             ),
             SizedBox(height: 12),
             _buildSummaryCard(
               'Stock Total',
-              '${_getStockTotal()}',
+              '${_inventorySummary['total_quantity'] ?? 0}',
               Icons.assessment,
               Colors.green,
             ),
@@ -960,14 +973,16 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
               ),
             ),
             SizedBox(height: 20),
-            _buildStatItem('Insumo con mayor stock', _getInsumoMayorStock()),
-            SizedBox(height: 16),
-            _buildStatItem('Insumo con menor stock', _getInsumoMenorStock()),
+            _buildStatItem('Items disponibles',
+                '${_inventorySummary['in_stock_items'] ?? 0}'),
             SizedBox(height: 16),
             _buildStatItem(
               'Promedio de stock',
               '${_getPromedioStock().toStringAsFixed(1)} unidades',
             ),
+            SizedBox(height: 16),
+            _buildStatItem('Última actualización',
+                '${_inventorySummary['updated_at'] != null ? 'Hace unos momentos' : 'N/A'}'),
             SizedBox(height: 24),
             Text(
               'Alertas',
@@ -1446,13 +1461,17 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
   List<Widget> _buildAlertas() {
     List<Widget> alertas = [];
 
-    if (_getSinStock() > 0) {
-      alertas.add(_buildAlerta('Productos sin stock', Icons.error, Colors.red));
+    final sinStockCount = _getSinStockCount();
+    if (sinStockCount > 0) {
+      alertas.add(_buildAlerta(
+          '$sinStockCount productos sin stock', Icons.error, Colors.red));
     }
 
-    if (_getStockBajo() > 0) {
+    if (_lowStockItems.isNotEmpty) {
+      final lowStockCount = _lowStockItems.length;
       alertas.add(
-        _buildAlerta('Stock bajo detectado', Icons.warning, Colors.orange),
+        _buildAlerta(
+            '$lowStockCount productos con stock bajo', Icons.warning, Colors.orange),
       );
     }
 
@@ -1498,50 +1517,17 @@ class _GestionInventarioUpdatedState extends State<GestionInventarioUpdated>
   }
 
   // Métodos auxiliares para estadísticas
-  int _getStockBajo() {
-    return _inventoryItems.where((insumo) {
-      final cantidad = insumo.quantity;
-      return cantidad > 0 && cantidad <= 1;
-    }).length;
-  }
-
-  int _getSinStock() {
-    return _inventoryItems.where((insumo) {
-      final cantidad = insumo.quantity;
-      return cantidad <= 0;
-    }).length;
-  }
-
-  int _getStockTotal() {
-    return _inventoryItems.fold(0, (total, insumo) {
-      return total + insumo.quantity;
-    });
-  }
-
-  String _getInsumoMayorStock() {
-    if (_inventoryItems.isEmpty) return 'Sin datos';
-
-    var insumoMayor = _inventoryItems.reduce((a, b) {
-      return a.quantity > b.quantity ? a : b;
-    });
-
-    return insumoMayor.itemName;
-  }
-
-  String _getInsumoMenorStock() {
-    if (_inventoryItems.isEmpty) return 'Sin datos';
-
-    var insumoMenor = _inventoryItems.reduce((a, b) {
-      return a.quantity < b.quantity ? a : b;
-    });
-
-    return insumoMenor.itemName;
+  int _getSinStockCount() {
+    // Utiliza el nuevo campo 'out_of_stock_items' que viene del backend.
+    // Se asegura de que el valor sea numérico y lo convierte a entero, con un fallback a 0.
+    return (_inventorySummary['out_of_stock_items'] as num?)?.toInt() ?? 0;
   }
 
   double _getPromedioStock() {
-    if (_inventoryItems.isEmpty) return 0.0;
-
-    final total = _getStockTotal();
-    return total / _inventoryItems.length;
+    final totalQuantity = (_inventorySummary['total_quantity'] as num?) ?? 0;
+    final totalItems = (_inventorySummary['total_items'] as num?) ?? 0;
+    return totalItems > 0 ? totalQuantity / totalItems : 0.0;
   }
+
+
 }

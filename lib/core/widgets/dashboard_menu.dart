@@ -5,7 +5,7 @@ import 'package:sotfbee/features/admin/inventory/presentation/inventory_manageme
 import 'package:sotfbee/features/admin/monitoring/presentation/main_monitoring_page.dart';
 import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
-import 'package:sotfbee/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:sotfbee/features/auth/data/datasources/auth_service.dart';
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
 import 'package:sotfbee/features/auth/presentation/pages/user_profile_page.dart';
 import 'package:flutter_animate/flutter_animate.dart'; // Importa la página corregida
