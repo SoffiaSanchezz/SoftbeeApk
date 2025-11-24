@@ -4,6 +4,7 @@ import 'package:sotfbee/features/admin/history/presentation/inspection_history_p
 import 'package:sotfbee/features/admin/inventory/presentation/inventory_management_page.dart';
 import 'package:sotfbee/features/admin/monitoring/presentation/main_monitoring_page.dart';
 import 'package:sotfbee/features/admin/reports/presentation/dashboard_reports_page.dart';
+import 'package:sotfbee/features/admin/history/service/api_service.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:sotfbee/features/auth/data/datasources/auth_service.dart';
 import 'package:sotfbee/features/auth/data/models/user_model.dart';
@@ -24,6 +25,7 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
   Offset _mousePosition = Offset.zero;
   UserProfile? _userProfile;
   Map<String, dynamic> _dashboardStats = {};
+  final ApiService _apiService = ApiService();
 
   final List<MenuItemData> _menuItems = [
     MenuItemData(
@@ -60,6 +62,7 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadDashboardStats();
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -69,6 +72,22 @@ class _EnhancedMenuScreenState extends State<MenuScreen>
       duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
+  }
+
+  Future<void> _loadDashboardStats() async {
+    try {
+      final stats = await _apiService.getSystemStats();
+      if (mounted) {
+        setState(() {
+          _dashboardStats = stats;
+        });
+      }
+    } catch (e) {
+      print('Error cargando estadísticas del dashboard: $e');
+      if (mounted) {
+        // Handle error, maybe show a message
+      }
+    }
   }
 
   Future<void> _loadUserProfile() async {

@@ -90,6 +90,7 @@ class Monitoreo {
   final String? apiarioNombre;
   final String? hiveNumber;
   final bool sincronizado;
+  final ProcessedData? processedData;
 
   Monitoreo({
     required this.monitoreoId,
@@ -100,6 +101,7 @@ class Monitoreo {
     this.apiarioNombre,
     this.hiveNumber,
     required this.sincronizado,
+    this.processedData,
   });
 
   factory Monitoreo.fromJson(Map<String, dynamic> json) {
@@ -119,6 +121,31 @@ class Monitoreo {
       apiarioNombre: json['apiario_nombre']?.toString(),
       hiveNumber: json['hive_number']?.toString(),
       sincronizado: json['sincronizado'] as bool? ?? false,
+      processedData: json['processed_data'] != null
+          ? ProcessedData.fromJson(json['processed_data'])
+          : null,
+    );
+  }
+}
+
+class ProcessedData {
+  final int overallScore;
+  final String status;
+  final Map<String, double> scores;
+
+  ProcessedData({
+    required this.overallScore,
+    required this.status,
+    required this.scores,
+  });
+
+  factory ProcessedData.fromJson(Map<String, dynamic> json) {
+    return ProcessedData(
+      overallScore: (json['overall_score'] as num?)?.round() ?? 0,
+      status: json['status']?.toString() ?? 'Desconocido',
+      scores: Map<String, double>.from(json['scores'] ?? {}).map(
+        (key, value) => MapEntry(key, (value as num).toDouble()),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:sotfbee/features/admin/reports/model/api_models.dart';
 import 'package:sotfbee/features/admin/reports/widgets/responsive_widgets.dart';
+import 'package:sotfbee/features/admin/reports/presentation/report_detail_page.dart';
 
 class DashboardSummaryCard extends StatelessWidget {
   final SystemStats stats;
@@ -246,11 +247,19 @@ class _ApiarioCard extends StatelessWidget {
     final ultimoMonitoreo = monitoreos.isNotEmpty ? monitoreos.first : null;
     final isMobile = ResponsiveBreakpoints.isMobile(context);
 
+    // Determinar el estado y el score del último monitoreo, si existe
+    final status = ultimoMonitoreo?.processedData?.status ?? 'N/A';
+    final score = ultimoMonitoreo?.processedData?.overallScore ?? 0;
+    final statusColor = _getStatusColor(status);
+
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: statusColor.withOpacity(0.5), width: 1.5),
+      ),
       child: InkWell(
-        onTap: () => _showApiarioDetails(context),
+        onTap: () => _showApiarioDetails(context, ultimoMonitoreo),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -316,12 +325,10 @@ class _ApiarioCard extends StatelessWidget {
                   ),
                   _buildStatItem(
                     context,
-                    'Último',
-                    ultimoMonitoreo != null
-                        ? _formatDaysAgo(ultimoMonitoreo.fecha)
-                        : 'N/A',
-                    Icons.schedule,
-                    Colors.grey[600]!,
+                    'Score General',
+                    '$score%',
+                    Icons.speed,
+                    statusColor,
                   ),
                 ],
               ),
@@ -332,14 +339,14 @@ class _ApiarioCard extends StatelessWidget {
                   width: double.infinity,
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(ultimoMonitoreo).withOpacity(0.1),
+                    color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    'Último monitoreo: ${_formatDate(ultimoMonitoreo.fecha)}',
+                    'Último estado: $status (${_formatDate(ultimoMonitoreo.fecha)})',
                     style: ApiarioTheme.bodyStyle.copyWith(
                       fontSize: ApiarioTheme.getBodyFontSize(context) - 4,
-                      color: _getStatusColor(ultimoMonitoreo),
+                      color: statusColor,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
@@ -383,25 +390,24 @@ class _ApiarioCard extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(Monitoreo monitoreo) {
-    final daysSince = DateTime.now().difference(monitoreo.fecha).inDays;
-    if (daysSince <= 7) return ApiarioTheme.successColor;
-    if (daysSince <= 30) return ApiarioTheme.warningColor;
-    return ApiarioTheme.dangerColor;
-  }
-
-  String _formatDaysAgo(DateTime date) {
-    final days = DateTime.now().difference(date).inDays;
-    if (days == 0) return 'Hoy';
-    if (days == 1) return 'Ayer';
-    return '${days}d';
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'bueno':
+        return ApiarioTheme.successColor;
+      case 'regular':
+        return ApiarioTheme.warningColor;
+      case 'alerta':
+        return ApiarioTheme.dangerColor;
+      default:
+        return Colors.grey;
+    }
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  void _showApiarioDetails(BuildContext context) {
+  void _showApiarioDetails(BuildContext context, Monitoreo? ultimoMonitoreo) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -420,21 +426,16 @@ class _ApiarioCard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text('Creado: ${_formatDate(apiario.createdAt)}'),
-              if (apiario.monitoreos?.isNotEmpty == true) ...[
+              if (ultimoMonitoreo != null) ...[
                 SizedBox(height: 12),
                 Text(
-                  'Monitoreos recientes:',
+                  'Último Monitoreo:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
-                ...apiario.monitoreos!
-                    .take(3)
-                    .map(
-                      (m) => Padding(
-                        padding: EdgeInsets.only(bottom: 4),
-                        child: Text('• ${_formatDate(m.fecha)}'),
-                      ),
-                    ),
+                Text('  • Fecha: ${_formatDate(ultimoMonitoreo.fecha)}'),
+                Text('  • Estado: ${ultimoMonitoreo.processedData?.status ?? "N/A"}'),
+                Text('  • Score: ${ultimoMonitoreo.processedData?.overallScore ?? "N/A"}%'),
               ],
             ],
           ),
@@ -447,6 +448,7 @@ class _ApiarioCard extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              // Aquí podrías navegar a una vista detallada del apiario
             },
             child: Text('Ver Detalles'),
           ),
@@ -525,10 +527,17 @@ class _MonitoreoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveBreakpoints.isMobile(context);
-    final statusColor = _getStatusColor();
+    final status = monitoreo.processedData?.status ?? 'N/A';
+    final score = monitoreo.processedData?.overallScore ?? 0;
+    final statusColor = _getStatusColor(status);
 
     return InkWell(
-      onTap: () => _showMonitoreoDetails(context),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReportDetailPage(report: monitoreo),
+        ),
+      ),
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Row(
@@ -561,20 +570,32 @@ class _MonitoreoItem extends StatelessWidget {
                       color: Colors.grey[600],
                     ),
                   ),
-                  if (monitoreo.respuestas.isNotEmpty) ...[
-                    SizedBox(height: 2),
-                    Text(
-                      '${monitoreo.respuestas.length} respuestas registradas',
-                      style: ApiarioTheme.bodyStyle.copyWith(
-                        fontSize: ApiarioTheme.getBodyFontSize(context) - 2,
-                        color: statusColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
+            SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$score%',
+                  style: ApiarioTheme.bodyStyle.copyWith(
+                    fontSize: ApiarioTheme.getBodyFontSize(context),
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
+                ),
+                Text(
+                  status,
+                  style: ApiarioTheme.bodyStyle.copyWith(
+                    fontSize: ApiarioTheme.getBodyFontSize(context) - 4,
+                    color: statusColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: 8),
             if (!isMobile)
               Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
@@ -583,62 +604,21 @@ class _MonitoreoItem extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor() {
-    final daysSince = DateTime.now().difference(monitoreo.fecha).inDays;
-    if (daysSince <= 1) return ApiarioTheme.successColor;
-    if (daysSince <= 7) return ApiarioTheme.warningColor;
-    return ApiarioTheme.dangerColor;
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'bueno':
+        return ApiarioTheme.successColor;
+      case 'regular':
+        return ApiarioTheme.warningColor;
+      case 'alerta':
+        return ApiarioTheme.dangerColor;
+      default:
+        return Colors.grey;
+    }
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  void _showMonitoreoDetails(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Monitoreo del ${_formatDate(monitoreo.fecha)}'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Apiario: ${monitoreo.apiarioNombre ?? 'N/A'}'),
-              SizedBox(height: 8),
-              Text(
-                'Colmena: ${monitoreo.hiveNumber ?? monitoreo.colmenaId}',
-              ),
-              SizedBox(height: 8),
-              if (monitoreo.respuestas.isNotEmpty) ...[
-                SizedBox(height: 12),
-                Text(
-                  'Respuestas:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                ...monitoreo.respuestas
-                    .take(3)
-                    .map(
-                      (r) => Padding(
-                        padding: EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          '• ${r.preguntaTexto}: ${r.respuesta ?? 'N/A'}',
-                        ),
-                      ),
-                    ),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cerrar'),
-          ),
-        ],
-      ),
-    );
   }
 }
 

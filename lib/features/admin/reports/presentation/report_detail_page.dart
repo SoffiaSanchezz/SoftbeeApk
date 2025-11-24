@@ -22,11 +22,90 @@ class ReportDetailPage extends StatelessWidget {
           children: [
             _buildHeader(context),
             SizedBox(height: 24),
+            if (report.processedData != null)
+              _buildProcessedDataSection(context, report.processedData!),
+            SizedBox(height: 24),
             _buildRespuestasSection(context),
           ],
         ),
       ),
     );
+  }
+  
+  Widget _buildProcessedDataSection(BuildContext context, ProcessedData data) {
+    final statusColor = _getStatusColor(data.status);
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text(
+              'Análisis General',
+              style: ApiarioTheme.titleStyle.copyWith(
+                fontSize: ApiarioTheme.getSubtitleFontSize(context),
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      'Score General',
+                      style: ApiarioTheme.bodyStyle.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: ApiarioTheme.getBodyFontSize(context) - 2,
+                      ),
+                    ),
+                    Text(
+                      '${data.overallScore}%',
+                      style: ApiarioTheme.titleStyle.copyWith(
+                        fontSize: ApiarioTheme.getTitleFontSize(context) - 4,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text(
+                      'Estado',
+                      style: ApiarioTheme.bodyStyle.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: ApiarioTheme.getBodyFontSize(context) - 2,
+                      ),
+                    ),
+                    Text(
+                      data.status,
+                      style: ApiarioTheme.titleStyle.copyWith(
+                        fontSize: ApiarioTheme.getTitleFontSize(context) - 4,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'bueno':
+        return ApiarioTheme.successColor;
+      case 'regular':
+        return ApiarioTheme.warningColor;
+      case 'alerta':
+        return ApiarioTheme.dangerColor;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildHeader(BuildContext context) {
